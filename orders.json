@@ -1,0 +1,12 @@
+[
+  {
+    "id": "kbr-690716",
+    "date": "16.11.2026 22:00:00",
+    "buyerName": "Test Müşteri",
+    "buyerEmail": "musteri@ornek.com",
+    "items": [],
+    "discount": 0,
+    "total": 100.00,
+    "status": "Beklemede"
+  }
+]
