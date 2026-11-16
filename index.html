@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBR B2B Sipariş Takip ve Yönetim Sistemi</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init({
+                publicKey: "IJSc2K52mwkPMWynb",
+            });
+        })();
+    </script>
+    <style>
+        .kbr-primary { background-color: #0f172a; }
+        .kbr-accent { background-color: #059669; }
+        .kbr-accent-hover:hover { background-color: #047857; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans min-h-screen flex flex-col justify-between">
+
+    <!-- TOPBAR -->
+    <header class="kbr-primary text-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 text-white font-bold p-2 rounded-lg text-lg tracking-wider">KBR</div>
+                <div>
+                    <h1 class="text-lg font-bold">KBR PİKNİK ÜRÜNLERİ A.Ş.</h1>
+                    <p class="text-xs text-slate-400">B2B Sipariş Takip ve Yönetim Sistemi</p>
+                </div>
+            </div>
+            <div id="user-info" class="hidden flex items-center space-x-4">
+                <span id="welcome-msg" class="text-sm font-medium text-slate-300"></span>
+                <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 px-3 py-1.5 rounded text-xs font-semibold transition">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i> Çıkış Yap
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="container mx-auto px-4 py-6 flex-grow">
+
+        <!-- LOGIN SECTION -->
+        <div id="login-section" class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8 mt-10 border border-slate-200">
+            <div class="text-center mb-6">
+                <div class="inline-block p-3 bg-emerald-50 text-emerald-600 rounded-full text-2xl mb-2">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">Sisteme Giriş Yapın</h2>
+                <p class="text-xs text-slate-500 mt-1">Satış Temsilcisi: <b>user / user</b> | Yönetici: <b>admin / admin</b></p>
+            </div>
+            
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Kullanıcı Adı</label>
+                    <input type="text" id="username" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" placeholder="Kullanıcı adınızı giriniz">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Şifre</label>
+                    <input type="password" id="password" required class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm" placeholder="••••••">
+                </div>
+                <button type="submit" class="w-full kbr-accent kbr-accent-hover text-white py-2.5 rounded-lg font-semibold transition shadow-sm text-sm">
+                    Giriş Yap
+                </button>
+            </form>
+        </div>
+
+        <!-- APP DASHBOARD -->
+        <div id="app-dashboard" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- LEFT 2 COLUMNS: CATALOG & CART / ADMIN PANEL -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- USER INTERFACE (Catalog & Cart) -->
+                <div id="user-panel" class="space-y-6">
+                    <!-- Catalog Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-boxes-stacked mr-2 text-emerald-600"></i>KBR 2026 Ürün Kataloğu</h3>
+                            <input type="text" id="product-search" oninput="filterProducts()" placeholder="Ürün veya kod ara..." class="px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-500 w-52">
+                        </div>
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-50 sticky top-0 text-slate-600 uppercase z-10">
+                                    <tr>
+                                        <th class="p-2.5 border-b">Kod</th>
+                                        <th class="p-2.5 border-b">Ürün Açıklaması</th>
+                                        <th class="p-2.5 border-b">Barkod</th>
+                                        <th class="p-2.5 border-b text-center">Paket</th>
+                                        <th class="p-2.5 border-b text-center">Koli</th>
+                                        <th class="p-2.5 border-b text-center">Palet</th>
+                                        <th class="p-2.5 border-b text-right">Fiyat (TL)</th>
+                                        <th class="p-2.5 border-b text-center">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="catalog-tbody" class="divide-y divide-slate-100">
+                                    <!-- Dynamic Products -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Cart & Order Creation Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                        <h3 class="font-bold text-slate-800 text-base mb-3"><i class="fa-solid fa-cart-shopping mr-2 text-emerald-600"></i>Sepet & Sipariş Oluştur</h3>
+                        <div id="cart-container" class="space-y-3">
+                            <p class="text-xs text-slate-400 italic">Sepetiniz boş.</p>
+                        </div>
+                        
+                        <div id="cart-summary" class="hidden mt-4 pt-4 border-t space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="font-semibold text-slate-600">Genel İskonto (%):</span>
+                                <input type="number" id="order-discount" value="0" min="0" max="100" onchange="updateCartTotal()" class="w-20 px-2 py-1 text-right border rounded text-xs">
+                            </div>
+                            <div class="flex justify-between items-center text-base font-bold text-slate-800">
+                                <span>Toplam Tutar:</span>
+                                <span id="cart-grand-total" class="text-emerald-600">0.00 TL</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Müşteri / Alıcı Firma Adı</label>
+                                    <input type="text" id="buyer-name" placeholder="Örn: Mehmet Marketçilik" class="w-full px-3 py-1.5 text-xs border rounded">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Müşteri E-posta (Mailin Gideceği Adres)</label>
+                                    <input type="email" id="buyer-email" placeholder="musteri@ornek.com" class="w-full px-3 py-1.5 text-xs border rounded font-mono text-emerald-700 font-bold bg-slate-50">
+                                </div>
+                            </div>
+                            <button onclick="createOrder()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm mt-2">
+                                <i class="fa-solid fa-paper-plane mr-1"></i> Siparişi Oluştur & Müşteriye Gerçek Mail Gönder (EmailJS)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN PANEL -->
+                <div id="admin-panel" class="hidden space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                        <h3 class="font-bold text-slate-800 text-base mb-4"><i class="fa-solid fa-chart-line mr-2 text-indigo-600"></i>Yönetici Sipariş Takip Paneli</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-50 text-slate-600 uppercase">
+                                    <tr>
+                                        <th class="p-2.5 border-b">Sipariş ID</th>
+                                        <th class="p-2.5 border-b">Tarih</th>
+                                        <th class="p-2.5 border-b">Müşteri (Firma & E-posta)</th>
+                                        <th class="p-2.5 border-b text-right">Tutar</th>
+                                        <th class="p-2.5 border-b text-center">Durum</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-orders-tbody" class="divide-y divide-slate-100">
+                                    <!-- Orders -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: LIVE ORDERS FEED -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 sticky top-6">
+                    <h3 class="font-bold text-slate-800 text-base mb-3"><i class="fa-solid fa-clock-rotate-left mr-2 text-emerald-600"></i>Sipariş Durum Akışı</h3>
+                    <div id="orders-feed" class="space-y-3 max-h-[500px] overflow-y-auto">
+                        <p class="text-xs text-slate-400 italic">Henüz aktif sipariş bulunmuyor.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-500 mt-10">
+        Yapımcı © 2026 Mehmet KARAHAN — KBR Piknik Ürünleri A.Ş. B2B Yönetim Sistemi
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const catalogProducts = [
+            { code: "KPK-001", name: "KBR 7 OZ KAGIT BARDAK 10LÜ", barcode: "8,68E+12", paket: "10", koli: "60", palet: "42", price: 30 },
+            { code: "KPK-002", name: "KBR 7 OZ KAGIT BARDAK 20Lİ", barcode: "8,68E+12", paket: "20", koli: "30", palet: "50", price: 48 },
+            { code: "KPK-004", name: "KBR 4 OZ KAGIT BARDAK 25Lİ", barcode: "8,68E+12", paket: "25", koli: "40", palet: "42", price: 60 },
+            { code: "KPK-005", name: "KBR 8 OZ KAGIT BARDAK 6 LI + KAPAK", barcode: "8,68E+12", paket: "6", koli: "30", palet: "50", price: 60 },
+            { code: "KPK-101", name: "KBR 180 CC PLASTİK BARDAK 25 Lİ", barcode: "8,68E+12", paket: "25", koli: "30", palet: "60", price: 40 },
+            { code: "KPK-202", name: "KBR 3 GÖZLÜ KÖPÜK TABAK 5 Lİ", barcode: "8,68E+12", paket: "5", koli: "40", palet: "24", price: 50 },
+            { code: "KPK-302", name: "KBR KARTON TABAK 10 Lİ", barcode: "8,68E+12", paket: "10", koli: "60", palet: "30", price: 45 },
+            { code: "KPK-402", name: "KBR PLASTİK ÇATAL 50 Lİ", barcode: "8,68E+12", paket: "50", koli: "20", palet: "96", price: 84 },
+            { code: "KPK-502", name: "KBR PLASTİK KAŞIK 50 Lİ", barcode: "8,68E+12", paket: "50", koli: "20", palet: "96", price: 84 },
+            { code: "KPK-603", name: "KBR AHŞAP KARIŞTIRICI 1000 Lİ", barcode: "8,68E+12", paket: "1000", koli: "24", palet: "36", price: 126 },
+            { code: "KPK-702", name: "KBR PLASTİK 22 CM TABAK 50 Lİ", barcode: "8,68E+12", paket: "50", koli: "28", palet: "21", price: 280 },
+            { code: "STD-001", name: "KÜLLAN AT STAND (5 RAFLI)", barcode: "0", paket: "0", koli: "0", palet: "4", price: 19730}
+        ];
+
+        // Her açılışta kullanıcı listesini garanti altına alıyoruz
+        const defaultUsers = [
+            { username: 'admin', password: 'admin', role: 'admin' },
+            { username: 'user', password: 'user', role: 'user' }
+        ];
+        localStorage.setItem('kbr_users', JSON.stringify(defaultUsers));
+
+        let currentUser = null;
+        let cart = [];
+        let orders = JSON.parse(localStorage.getItem('kbr_orders')) || [];
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim().toLowerCase();
+            const p = document.getElementById('password').value.trim();
+            
+            const activeUsers = JSON.parse(localStorage.getItem('kbr_users')) || defaultUsers;
+            const foundUser = activeUsers.find(usr => usr.username.toLowerCase() === u && usr.password === p);
+
+            if (foundUser) {
+                currentUser = foundUser;
+                localStorage.setItem('kbr_current_user', JSON.stringify(foundUser));
+                initApp();
+            } else {
+                alert('Hatalı kullanıcı adı veya şifre! Lütfen kontrol ediniz.\n\nSatış Temsilcisi için: user / user\nYönetici için: admin / admin');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('kbr_current_user');
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('app-dashboard').classList.add('hidden');
+            document.getElementById('user-info').classList.add('hidden');
+            document.getElementById('login-form').reset();
+        }
+
+        function initApp() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('app-dashboard').classList.remove('hidden');
+            document.getElementById('user-info').classList.remove('hidden');
+
+            const welcomeMsg = document.getElementById('welcome-msg');
+            const userPanel = document.getElementById('user-panel');
+            const adminPanel = document.getElementById('admin-panel');
+
+            if (currentUser.role === 'admin') {
+                welcomeMsg.innerText = 'Hoş geldiniz: Yönetici (' + currentUser.username + ')';
+                userPanel.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                renderAdminOrders();
+            } else {
+                welcomeMsg.innerText = 'Hoş geldiniz: Satış Temsilcisi (' + currentUser.username + ')';
+                userPanel.classList.remove('hidden');
+                adminPanel.classList.add('hidden');
+                renderCatalog(catalogProducts);
+            }
+            renderOrdersFeed();
+        }
+
+        function renderCatalog(products) {
+            const tbody = document.getElementById('catalog-tbody');
+            tbody.innerHTML = '';
+            products.forEach(p => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-2.5 font-mono text-slate-600">${p.code}</td>
+                        <td class="p-2.5 font-semibold text-slate-800">${p.name}</td>
+                        <td class="p-2.5 font-mono text-slate-500">${p.barcode}</td>
+                        <td class="p-2.5 text-center">${p.paket}</td>
+                        <td class="p-2.5 text-center">${p.koli}</td>
+                        <td class="p-2.5 text-center">${p.palet}</td>
+                        <td class="p-2.5 text-right font-medium text-emerald-600">${p.price.toFixed(2)} TL</td>
+                        <td class="p-2.5 text-center">
+                            <button onclick="addToCart('${p.code}', '${encodeURIComponent(p.name)}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-xs transition">
+                                <i class="fa-solid fa-plus mr-1"></i> Ekle
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('product-search').value.toLowerCase();
+            const filtered = catalogProducts.filter(p => p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query));
+            renderCatalog(filtered);
+        }
+
+        function addToCart(code, encodedName) {
+            const name = decodeURIComponent(encodedName);
+            const product = catalogProducts.find(p => p.code === code && p.name === name);
+            const existing = cart.find(item => item.code === code && item.name === name);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function updateCartQty(code, name, qty) {
+            const item = cart.find(i => i.code === code && i.name === name);
+            if (item) {
+                item.qty = parseInt(qty) || 0;
+                if (item.qty <= 0) {
+                    cart = cart.filter(i => !(i.code === code && i.name === name));
+                }
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-container');
+            const summary = document.getElementById('cart-summary');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 italic">Sepetiniz boş.</p>`;
+                summary.classList.add('hidden');
+                return;
+            }
+
+            container.innerHTML = '';
+            cart.forEach(item => {
+                container.innerHTML += `
+                    <div class="flex justify-between items-center bg-slate-50 p-2 rounded border text-xs">
+                        <div>
+                            <span class="font-bold text-slate-800">${item.name}</span>
+                            <div class="text-slate-500 font-mono">${item.price} TL x ${item.qty}</div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" min="1" value="${item.qty}" onchange="updateCartQty('${item.code}', '${encodeURIComponent(item.name)}', this.value)" class="w-14 px-2 py-1 text-center border rounded">
+                            <span class="font-bold text-slate-700 w-20 text-right">${(item.price * item.qty).toFixed(2)} TL</span>
+                            <button onclick="updateCartQty('${item.code}', '${encodeURIComponent(item.name)}', 0)" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            summary.classList.remove('hidden');
+            updateCartTotal();
+        }
+
+        function updateCartTotal() {
+            let subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            let discountRate = parseFloat(document.getElementById('order-discount').value) || 0;
+            let grandTotal = subtotal * (1 - discountRate / 100);
+            document.getElementById('cart-grand-total').innerText = grandTotal.toFixed(2) + ' TL';
+        }
+
+        function createOrder() {
+            const buyerName = document.getElementById('buyer-name').value.trim();
+            const buyerEmail = document.getElementById('buyer-email').value.trim();
+
+            if (!buyerName || !buyerEmail) {
+                alert('Lütfen müşteri adı ve e-posta adresini giriniz!');
+                return;
+            }
+
+            let subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+            let discountRate = parseFloat(document.getElementById('order-discount').value) || 0;
+            let grandTotal = subtotal * (1 - discountRate / 100);
+
+            const orderId = 'KBR-' + Math.floor(100000 + Math.random() * 900000);
+            let itemsText = cart.map(i => `${i.name} (${i.qty} adet) - ${(i.price * i.qty).toFixed(2)} TL`).join('\n');
+
+            const emailParams = {
+                to_email: buyerEmail,
+                buyer_name: buyerName,
+                order_id: orderId,
+                order_details: itemsText,
+                total_amount: grandTotal.toFixed(2) + ' TL'
+            };
+
+            // DÜZELTİLDİ: Doğru parametreler (Service ID, Template ID, emailParams) ile çağrılıyor
+            emailjs.send("service_jdi2nl1", "template_4sr6o2p", emailParams)
+                .then(function(response) {
+                    alert(`Sipariş başarıyla oluşturuldu ve müşterinin e-posta adresi olan "${buyerEmail}" adresine EmailJS ile gönderildi!`);
+                }, function(error) {
+                    alert('Sipariş kaydedildi ancak e-posta gönderilemedi. Hata: ' + JSON.stringify(error));
+                });
+
+            const newOrder = {
+                id: orderId,
+                date: new Date().toLocaleString('tr-TR'),
+                buyerName: buyerName,
+                buyerEmail: buyerEmail,
+                items: [...cart],
+                discount: discountRate,
+                total: grandTotal,
+                status: 'Beklemede'
+            };
+
+            orders.unshift(newOrder);
+            localStorage.setItem('kbr_orders', JSON.stringify(orders));
+
+            cart = [];
+            document.getElementById('buyer-name').value = '';
+            document.getElementById('buyer-email').value = '';
+            document.getElementById('order-discount').value = '0';
+            renderCart();
+            renderOrdersFeed();
+            if (currentUser && currentUser.role === 'admin') renderAdminOrders();
+        }
+
+        function renderOrdersFeed() {
+            const feed = document.getElementById('orders-feed');
+            if (orders.length === 0) {
+                feed.innerHTML = `<p class="text-xs text-slate-400 italic">Henüz aktif sipariş bulunmuyor.</p>`;
+                return;
+            }
+
+            feed.innerHTML = '';
+            orders.forEach(o => {
+                feed.innerHTML += `
+                    <div class="bg-slate-50 p-3 rounded-lg border text-xs space-y-1">
+                        <div class="flex justify-between font-bold text-slate-800">
+                            <span>${o.id}</span>
+                            <span class="text-emerald-600">${o.total.toFixed(2)} TL</span>
+                        </div>
+                        <div class="text-slate-600">Müşteri: <strong>${o.buyerName}</strong></div>
+                        <div class="text-[11px] text-emerald-700 font-mono">${o.buyerEmail}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAdminOrders() {
+            const tbody = document.getElementById('admin-orders-tbody');
+            if (orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic">Kayıtlı sipariş bulunmuyor.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            orders.forEach(o => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-2.5 font-mono font-bold text-slate-700">${o.id}</td>
+                        <td class="p-2.5 text-slate-500">${o.date}</td>
+                        <td class="p-2.5 font-semibold text-slate-800">${o.buyerName}<br><span class="text-[10px] text-emerald-700 font-mono">${o.buyerEmail}</span></td>
+                        <td class="p-2.5 text-right font-bold text-emerald-600">${o.total.toFixed(2)} TL</td>
+                        <td class="p-2.5 text-center"><span class="px-2 py-1 rounded text-[10px] bg-amber-100 text-amber-700">${o.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.onload = function() {
+            const savedUser = localStorage.getItem('kbr_current_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    if (currentUser && currentUser.username) {
+                        initApp();
+                    }
+                } catch (e) {
+                    localStorage.removeItem('kbr_current_user');
+                }
+            }
+        };
+    </script>
+</body>
+</html>
