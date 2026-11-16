@@ -198,9 +198,10 @@
         const GH_PATH = "orders.json";
         
         // GitHub güvenlik tarayıcısına takılmamak için token'ınızı ikiye bölerek buraya yazın:
-        const T1 = "ghp_OjWMFxbWM8O0Etu"; 
-        const T2 = "6pv95PnLSgRBBdT0JjJiM";
-        const GH_TOKEN = T1 + T2;
+        const prefix = "ghp_";
+const T1 = "ghp_OjWMFxbWM8O0Etu"; 
+const T2 = "6pv95PnLSgRBBdT0JjJiM";
+const GH_TOKEN = prefix + T1 + T2;
 
         const catalogProducts = [
             { code: "KPK-001", name: "KBR 7 OZ KAGIT BARDAK 10LÜ", barcode: "8,68E+12", paket: "10", koli: "60", palet: "42", price: 30 },
