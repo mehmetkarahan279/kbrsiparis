@@ -9,13 +9,12 @@
     body { margin: 0; font: 15px Arial, sans-serif; color: #1f2937; background: #f3f5f7; }
     header { background: #163c2b; color: white; padding: 16px 24px; }
     main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
-    section, .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 18px; }
+    section { background: white; border-radius: 10px; padding: 20px; margin-bottom: 18px; }
     input, select, button { font: inherit; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
     input, select { max-width: 100%; }
     button { cursor: pointer; background: #17633d; color: white; border: 0; }
     button.secondary { background: #475569; }
     button.danger { background: #a83232; }
-    button:disabled { opacity: .55; cursor: not-allowed; }
     .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .field { display: grid; gap: 6px; margin: 10px 0; }
     .field input { width: 100%; }
@@ -24,7 +23,6 @@
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
     th, td { text-align: left; padding: 9px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
     .scroll { overflow-x: auto; }
-    .muted { color: #64748b; }
     #message { margin: 12px 0; white-space: pre-wrap; }
     .line { display: grid; grid-template-columns: minmax(220px, 1fr) 100px 120px 70px; gap: 8px; margin: 8px 0; align-items: center; }
     .line select, .line input { width: 100%; }
@@ -53,7 +51,7 @@
         <label for="password">Şifre</label>
         <input id="password" type="password" required>
       </div>
-      <button>Giriş yap</button>
+      <button type="submit">Giriş yap</button>
     </form>
   </section>
 
@@ -146,13 +144,17 @@
   let currentProfile = null;
   let products = [];
 
-  const $ = (id) => document.getElementById(id);
-  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({
+  const $ = id => document.getElementById(id);
+
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
-  const money = (value) => Number(value || 0).toLocaleString("tr-TR", {
-    style: "currency", currency: "TRY"
+
+  const money = value => Number(value || 0).toLocaleString("tr-TR", {
+    style: "currency",
+    currency: "TRY"
   });
+
   const statusText = {
     draft: "Taslak",
     pending_approval: "Onay bekliyor",
@@ -169,12 +171,14 @@
     ["orders-page", "new-order-page", "products-page"].forEach(page => {
       $(page).classList.toggle("hidden", page !== id);
     });
+
     if (id === "orders-page") loadOrders();
     if (id === "products-page") loadProducts();
   }
 
   async function openApp(user) {
     currentUser = user;
+
     const { data, error } = await db.from("profiles")
       .select("username, full_name, role, active")
       .eq("id", user.id)
@@ -194,17 +198,19 @@
     $("new-order-page").classList.toggle("hidden", data.role !== "seller");
     $("products-page").classList.toggle("hidden", data.role !== "admin");
 
+    await loadProducts();
     await loadOrders();
-    if (data.role === "admin") await loadProducts();
   }
 
-  $("login-form").addEventListener("submit", async (event) => {
+  $("login-form").addEventListener("submit", async event => {
     event.preventDefault();
     message("Giriş yapılıyor…");
+
     const { data, error } = await db.auth.signInWithPassword({
       email: $("email").value,
       password: $("password").value
     });
+
     if (error) return message(error.message, true);
 
     try {
@@ -224,13 +230,63 @@
     button.addEventListener("click", () => showPage(button.dataset.page));
   });
 
-  // Ürün listesini getir
+  // Başlık adlarını Türkçe karakter ve boşluklardan arındırır.
+  function normHeader(value) {
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function findColumn(row, aliases) {
+    for (const key of Object.keys(row)) {
+      if (aliases.includes(normHeader(key))) return row[key];
+    }
+    return "";
+  }
+
+  function parseNumber(value) {
+    if (value === null || value === undefined || String(value).trim() === "") return null;
+
+    let s = String(value).trim().replace(/\s/g, "");
+
+    if (s.includes(",") && s.includes(".")) {
+      if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
+        s = s.replace(/\./g, "").replace(",", ".");
+      } else {
+        s = s.replace(/,/g, "");
+      }
+    } else if (s.includes(",")) {
+      s = s.replace(",", ".");
+    }
+
+    const number = Number(s);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function productKey(p) {
+    return [
+      p.product_code,
+      p.description,
+      p.barcode || "",
+      p.pack_inner ?? "",
+      p.carton_inner ?? "",
+      p.pallet_inner ?? "",
+      Number(p.price || 0).toFixed(2)
+    ].join("|").toLowerCase();
+  }
+
   async function loadProducts() {
     const { data, error } = await db.from("products")
       .select("*")
       .order("product_code");
 
-    if (error) return message("Ürünler yüklenemedi: " + error.message, true);
+    if (error) {
+      message("Ürünler yüklenemedi: " + error.message, true);
+      return;
+    }
+
     products = data || [];
 
     $("products-body").innerHTML = products.map(p => `
@@ -248,83 +304,104 @@
     refreshProductSelects();
   }
 
-  // Excel başlıklarını normalleştir
-  function normHeader(value) {
-    return String(value ?? "")
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase().replace(/[^a-z0-9]/g, "");
-  }
-
-  function findColumn(row, aliases) {
-    const keys = Object.keys(row);
-    for (const key of keys) {
-      if (aliases.includes(normHeader(key))) return row[key];
-    }
-    return "";
-  }
-
-  function parseNumber(value) {
-    if (value === null || value === undefined || String(value).trim() === "") return null;
-    let s = String(value).trim().replace(/\s/g, "");
-    if (s.includes(",") && s.includes(".")) {
-      if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
-      else s = s.replace(/,/g, "");
-    } else if (s.includes(",")) {
-      s = s.replace(",", ".");
-    }
-    const n = Number(s);
-    return Number.isFinite(n) ? n : null;
-  }
-
-  function productKey(p) {
-    return [
-      p.product_code, p.description, p.barcode || "",
-      p.pack_inner ?? "", p.carton_inner ?? "", p.pallet_inner ?? "",
-      Number(p.price || 0).toFixed(2)
-    ].join("|").toLowerCase();
-  }
-
   $("import-button").addEventListener("click", async () => {
     const file = $("excel-file").files[0];
     if (!file) return message("Önce Excel veya CSV dosyası seçin.", true);
 
     try {
       message("Dosya okunuyor…");
+
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+      // Excel'in ilk satırında başlık olsa bile gerçek sütun başlığı satırını bul.
+      const matrix = XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        defval: "",
+        raw: false
+      });
+
+      const headerIndex = matrix.findIndex(row => {
+        const headers = row.map(normHeader);
+        const hasCode = headers.some(h =>
+          ["urunkodu", "kod", "productcode"].includes(h)
+        );
+        const hasDescription = headers.some(h =>
+          ["urunaciklamasi", "aciklama", "description"].includes(h)
+        );
+        return hasCode && hasDescription;
+      });
+
+      if (headerIndex === -1) {
+        throw new Error("Ürün Kodu ve Ürün Açıklaması başlıkları bulunamadı.");
+      }
+
+      const headers = matrix[headerIndex].map(value => String(value ?? "").trim());
+
+      const rows = matrix
+        .slice(headerIndex + 1)
+        .filter(row => row.some(value => String(value ?? "").trim() !== ""))
+        .map(row =>
+          Object.fromEntries(
+            headers.map((header, index) => [header, row[index] ?? ""])
+          )
+        );
 
       const parsed = rows.map(row => ({
-        product_code: String(findColumn(row, ["kod", "urunkodu", "productcode"])).trim(),
-        description: String(findColumn(row, ["aciklama", "urunaciklamasi", "description"])).trim(),
-        barcode: String(findColumn(row, ["barkod", "barcode"])).trim() || null,
-        pack_inner: parseNumber(findColumn(row, ["paketici", "paketicinde", "packinner"])),
-        carton_inner: parseNumber(findColumn(row, ["koliici", "koliicinde", "cartoninner"])),
-        pallet_inner: parseNumber(findColumn(row, ["paletici", "paleticinde", "palletinner"])),
-        price: parseNumber(findColumn(row, ["fiyat", "price"])) ?? 0,
+        product_code: String(findColumn(row, [
+          "kod", "urunkodu", "productcode"
+        ])).trim(),
+
+        description: String(findColumn(row, [
+          "aciklama", "urunaciklamasi", "description"
+        ])).trim(),
+
+        barcode: String(findColumn(row, [
+          "barkod", "barcode"
+        ])).trim() || null,
+
+        pack_inner: parseNumber(findColumn(row, [
+          "paketici", "paketicinde", "packinner"
+        ])),
+
+        carton_inner: parseNumber(findColumn(row, [
+          "koliici", "koliicinde", "cartoninner"
+        ])),
+
+        pallet_inner: parseNumber(findColumn(row, [
+          "paletici", "paleticinde", "palletinner"
+        ])),
+
+        price: parseNumber(findColumn(row, [
+          "fiyat", "price"
+        ])) ?? 0,
+
         active: true
       })).filter(p => p.product_code && p.description);
 
       if (!parsed.length) {
-        return message("Ürün bulunamadı. Excel başlıklarını kontrol edin.", true);
+        throw new Error("Başlık satırı bulundu ama ürün satırı okunamadı.");
       }
 
       const existingKeys = new Set(products.map(productKey));
       const uniqueNew = [];
-      for (const p of parsed) {
-        const key = productKey(p);
+
+      for (const product of parsed) {
+        const key = productKey(product);
         if (!existingKeys.has(key)) {
-          uniqueNew.push(p);
+          uniqueNew.push(product);
           existingKeys.add(key);
         }
       }
 
       if (!uniqueNew.length) {
-        return message("Aktarılacak yeni ürün yok; aynı kayıtlar daha önce aktarılmış olabilir.");
+        return message("Yeni ürün yok; aynı kayıtlar daha önce aktarılmış olabilir.");
       }
 
       for (let i = 0; i < uniqueNew.length; i += 100) {
-        const { error } = await db.from("products").insert(uniqueNew.slice(i, i + 100));
+        const { error } = await db.from("products")
+          .insert(uniqueNew.slice(i, i + 100));
+
         if (error) throw error;
       }
 
@@ -335,17 +412,20 @@
     }
   });
 
-  // Sipariş formu
   function refreshProductSelects() {
     document.querySelectorAll(".product-select").forEach(select => {
-      const old = select.value;
-      select.innerHTML = '<option value="">Ürün seçin</option>' + products
-        .filter(p => p.active)
-        .map(p => {
-          const label = `${p.product_code} — ${p.description} (Koli: ${p.carton_inner ?? "—"})`;
-          return `<option value="${p.id}">${escapeHtml(label)}</option>`;
-        }).join("");
-      select.value = old;
+      const previousValue = select.value;
+
+      select.innerHTML = '<option value="">Ürün seçin</option>' +
+        products
+          .filter(p => p.active)
+          .map(p => {
+            const label = `${p.product_code} — ${p.description} (Koli: ${p.carton_inner ?? "—"})`;
+            return `<option value="${p.id}">${escapeHtml(label)}</option>`;
+          })
+          .join("");
+
+      select.value = previousValue;
     });
   }
 
@@ -358,6 +438,7 @@
       <span class="line-total">0,00 TL</span>
       <button type="button" class="danger remove-line">Sil</button>
     `;
+
     $("order-lines").appendChild(line);
     refreshProductSelects();
 
@@ -371,33 +452,49 @@
 
   function calculateTotal() {
     let total = 0;
+
     document.querySelectorAll("#order-lines .line").forEach(line => {
-      const product = products.find(p => String(p.id) === line.querySelector(".product-select").value);
+      const product = products.find(
+        p => String(p.id) === line.querySelector(".product-select").value
+      );
       const quantity = Number(line.querySelector(".quantity").value || 0);
       const amount = product ? Number(product.price) * quantity : 0;
+
       line.querySelector(".line-total").textContent = money(amount);
       total += amount;
     });
+
     $("order-total").textContent = money(total);
   }
 
   $("add-line").addEventListener("click", addOrderLine);
 
-  $("order-form").addEventListener("submit", async (event) => {
+  $("order-form").addEventListener("submit", async event => {
     event.preventDefault();
-    if (currentProfile.role !== "seller") return message("Siparişi yalnızca satıcı oluşturabilir.", true);
 
-    const lines = [...document.querySelectorAll("#order-lines .line")].map(line => {
-      const product = products.find(p => String(p.id) === line.querySelector(".product-select").value);
-      return product ? { product, quantity: Number(line.querySelector(".quantity").value) } : null;
-    }).filter(x => x && x.quantity > 0);
+    if (currentProfile.role !== "seller") {
+      return message("Siparişi yalnızca satıcı oluşturabilir.", true);
+    }
+
+    const lines = [...document.querySelectorAll("#order-lines .line")]
+      .map(line => {
+        const product = products.find(
+          p => String(p.id) === line.querySelector(".product-select").value
+        );
+        return product
+          ? { product, quantity: Number(line.querySelector(".quantity").value) }
+          : null;
+      })
+      .filter(item => item && item.quantity > 0);
 
     if (!lines.length) return message("Siparişe en az bir ürün ekleyin.", true);
 
-    const orderNumber = "KBR-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") +
+    const orderNumber = "KBR-" +
+      new Date().toISOString().slice(0, 10).replace(/-/g, "") +
       "-" + crypto.randomUUID().slice(0, 6).toUpperCase();
 
     message("Sipariş kaydediliyor…");
+
     const { data: order, error: orderError } = await db.from("orders").insert({
       order_number: orderNumber,
       seller_id: currentUser.id,
@@ -406,7 +503,9 @@
       status: "draft"
     }).select().single();
 
-    if (orderError) return message("Sipariş oluşturulamadı: " + orderError.message, true);
+    if (orderError) {
+      return message("Sipariş oluşturulamadı: " + orderError.message, true);
+    }
 
     const items = lines.map(({ product, quantity }) => ({
       order_id: order.id,
@@ -420,11 +519,18 @@
     }));
 
     const { error: itemError } = await db.from("order_items").insert(items);
+
     if (itemError) {
-      return message("Sipariş taslağı oluştu fakat ürün satırları eklenemedi: " + itemError.message, true);
+      return message(
+        "Sipariş taslağı oluştu fakat ürün satırları eklenemedi: " + itemError.message,
+        true
+      );
     }
 
-    const { error: submitError } = await db.rpc("submit_order", { p_order_id: order.id });
+    const { error: submitError } = await db.rpc("submit_order", {
+      p_order_id: order.id
+    });
+
     if (submitError) {
       return message("Sipariş taslakta kaldı; gönderilemedi: " + submitError.message, true);
     }
@@ -432,17 +538,20 @@
     $("order-form").reset();
     $("order-lines").innerHTML = "";
     $("order-total").textContent = money(0);
+
     message(`Sipariş ${orderNumber} oluşturuldu. E-posta bildirimi henüz etkinleştirilmedi.`);
     showPage("orders-page");
   });
 
-  // Sipariş listesi
   async function loadOrders() {
     const { data, error } = await db.from("orders")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) return message("Siparişler yüklenemedi: " + error.message, true);
+    if (error) {
+      message("Siparişler yüklenemedi: " + error.message, true);
+      return;
+    }
 
     $("orders-body").innerHTML = (data || []).map(order => `
       <tr>
@@ -460,7 +569,11 @@
             : escapeHtml(statusText[order.status] || order.status)}
         </td>
         <td>${new Date(order.created_at).toLocaleDateString("tr-TR")}</td>
-        <td><button class="secondary show-details" data-id="${escapeHtml(order.id)}">Görüntüle</button></td>
+        <td>
+          <button class="secondary show-details" data-id="${escapeHtml(order.id)}">
+            Görüntüle
+          </button>
+        </td>
       </tr>
     `).join("");
 
@@ -471,10 +584,15 @@
     document.querySelectorAll(".save-status").forEach(button => {
       button.addEventListener("click", async () => {
         const id = button.dataset.id;
-        const status = document.querySelector(`.status-select[data-id="${id}"]`).value;
-        const { error } = await db.from("orders").update({ status }).eq("id", id);
-        if (error) message("Durum güncellenemedi: " + error.message, true);
-        else {
+        const select = document.querySelector(`.status-select[data-id="${id}"]`);
+
+        const { error } = await db.from("orders")
+          .update({ status: select.value })
+          .eq("id", id);
+
+        if (error) {
+          message("Durum güncellenemedi: " + error.message, true);
+        } else {
           message("Sipariş durumu güncellendi.");
           loadOrders();
         }
@@ -484,29 +602,41 @@
 
   async function showOrderDetails(orderId) {
     const { data, error } = await db.from("order_items")
-      .select("*").eq("order_id", orderId);
+      .select("*")
+      .eq("order_id", orderId);
 
-    if (error) return message("Sipariş detayları yüklenemedi: " + error.message, true);
+    if (error) {
+      message("Sipariş detayları yüklenemedi: " + error.message, true);
+      return;
+    }
 
     $("detail-content").innerHTML = `
-      <div class="scroll"><table>
-        <thead><tr><th>Kod</th><th>Ürün</th><th>Adet</th><th>Birim fiyat</th><th>Tutar</th></tr></thead>
-        <tbody>${(data || []).map(item => `
-          <tr>
-            <td>${escapeHtml(item.product_code)}</td>
-            <td>${escapeHtml(item.description)}</td>
-            <td>${escapeHtml(item.quantity)}</td>
-            <td>${money(item.unit_price)}</td>
-            <td>${money(item.line_total)}</td>
-          </tr>`).join("")}</tbody>
-      </table></div>`;
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Kod</th><th>Ürün</th><th>Adet</th><th>Birim fiyat</th><th>Tutar</th></tr>
+          </thead>
+          <tbody>
+            ${(data || []).map(item => `
+              <tr>
+                <td>${escapeHtml(item.product_code)}</td>
+                <td>${escapeHtml(item.description)}</td>
+                <td>${escapeHtml(item.quantity)}</td>
+                <td>${money(item.unit_price)}</td>
+                <td>${money(item.line_total)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
     $("detail-dialog").showModal();
   }
 
   $("close-dialog").addEventListener("click", () => $("detail-dialog").close());
   $("refresh-orders").addEventListener("click", loadOrders);
 
-  // Sayfa yenilenince mevcut oturumu aç
   db.auth.getSession().then(async ({ data }) => {
     if (data.session) {
       try {
