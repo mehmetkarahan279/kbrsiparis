@@ -1,1 +1,98 @@
-sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBR Sipariş Sistemi - Bağlantı Testi</title>
+  <style>
+    body { font: 16px Arial, sans-serif; max-width: 520px; margin: 50px auto; padding: 0 16px; }
+    input, button { box-sizing: border-box; width: 100%; padding: 12px; margin: 8px 0; }
+    button { cursor: pointer; }
+    #message { margin-top: 16px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>KBR Sipariş Sistemi</h1>
+
+  <form id="login-form">
+    <label for="email">E-posta</label>
+    <input id="email" type="email" required>
+
+    <label for="password">Şifre</label>
+    <input id="password" type="password" required>
+
+    <button type="submit">Giriş yap</button>
+  </form>
+
+  <button id="logout-button" hidden>Çıkış yap</button>
+  <div id="message">Supabase bağlantısı bekleniyor…</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+
+    const client = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    const form = document.getElementById("login-form");
+    const message = document.getElementById("message");
+    const logoutButton = document.getElementById("logout-button");
+
+    async function showUser(user) {
+      const { data, error } = await client
+        .from("profiles")
+        .select("username, full_name, role, active")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        message.textContent = "Giriş yapıldı ama profil okunamadı: " + error.message;
+        return;
+      }
+
+      if (!data.active) {
+        await client.auth.signOut();
+        message.textContent = "Bu kullanıcı hesabı devre dışı.";
+        return;
+      }
+
+      form.hidden = true;
+      logoutButton.hidden = false;
+      message.textContent =
+        `Giriş başarılı\nKullanıcı: ${data.username}\nYetki: ${data.role}`;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.textContent = "Giriş yapılıyor…";
+
+      const { data, error } = await client.auth.signInWithPassword({
+        email: document.getElementById("email").value,
+        password: document.getElementById("password").value
+      });
+
+      if (error) {
+        message.textContent = "Giriş yapılamadı: " + error.message;
+        return;
+      }
+
+      await showUser(data.user);
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      await client.auth.signOut();
+      form.hidden = false;
+      logoutButton.hidden = true;
+      message.textContent = "Çıkış yapıldı.";
+    });
+
+    client.auth.getSession().then(({ data }) => {
+      if (data.session) showUser(data.session.user);
+      else message.textContent = "Supabase bağlantısı hazır. Giriş yapabilirsiniz.";
+    });
+  </script>
+</body>
+</html>
