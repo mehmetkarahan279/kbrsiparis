@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBR Sipariş Onayı</title>
+  <style>
+    body { font: 16px Arial, sans-serif; background:#f3f5f7; color:#1f2937; margin:0; }
+    main { max-width:750px; margin:35px auto; padding:20px; background:white; border-radius:10px; }
+    table { width:100%; border-collapse:collapse; margin:15px 0; }
+    th,td { text-align:left; padding:9px; border-bottom:1px solid #ddd; }
+    textarea { width:100%; min-height:90px; padding:10px; box-sizing:border-box; }
+    button { padding:12px 16px; border:0; border-radius:6px; color:white; cursor:pointer; margin:8px 8px 0 0; }
+    .approve { background:#17633d; }
+    .reject { background:#a83232; }
+    #message { white-space:pre-wrap; margin:14px 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>KBR Sipariş Özeti</h1>
+  <div id="message">Sipariş yükleniyor…</div>
+  <div id="order" hidden>
+    <p><strong>Sipariş no:</strong> <span id="order-number"></span></p>
+    <p><strong>Alıcı:</strong> <span id="customer-name"></span></p>
+    <table>
+      <thead>
+        <tr><th>Kod</th><th>Ürün</th><th>Adet</th><th>Birim fiyat</th><th>Tutar</th></tr>
+      </thead>
+      <tbody id="items"></tbody>
+    </table>
+    <p><strong>Toplam: <span id="total"></span></strong></p>
+    <label for="note">Notunuz (isteğe bağlı)</label>
+    <textarea id="note" maxlength="1000"></textarea>
+    <div>
+      <button class="approve" id="approve">Siparişi onayla</button>
+      <button class="reject" id="reject">Siparişi reddet</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const DB_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+  const DB_PUBLIC_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+  const db = window.supabase.createClient(DB_URL, DB_PUBLIC_KEY);
+
+  const $ = id => document.getElementById(id);
+  const token = new URLSearchParams(location.search).get("token");
+
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+  const money = value => Number(value || 0).toLocaleString("tr-TR", {
+    style: "currency", currency: "TRY"
+  });
+
+  async function hashToken(value) {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(value)
+    );
+    return Array.from(new Uint8Array(digest), b =>
+      b.toString(16).padStart(2, "0")
+    ).join("");
+  }
+
+  let tokenHash = "";
+
+  async function loadOrder() {
+    if (!token) {
+      $("message").textContent = "Onay bağlantısı eksik.";
+      return;
+    }
+
+    tokenHash = await hashToken(token);
+
+    const { data, error } = await db.rpc("get_order_by_token", {
+      p_token_hash: tokenHash
+    });
+
+    if (error || !data) {
+      $("message").textContent =
+        "Sipariş bulunamadı. Bağlantı süresi dolmuş veya sipariş zaten yanıtlanmış olabilir.";
+      return;
+    }
+
+    $("order-number").textContent = data.order_number;
+    $("customer-name").textContent = data.customer_name;
+
+    let total = 0;
+    $("items").innerHTML = (data.items || []).map(item => {
+      total += Number(item.line_total || 0);
+      return `<tr>
+        <td>${escapeHtml(item.product_code)}</td>
+        <td>${escapeHtml(item.description)}</td>
+        <td>${escapeHtml(item.quantity)}</td>
+        <td>${money(item.unit_price)}</td>
+        <td>${money(item.line_total)}</td>
+      </tr>`;
+    }).join("");
+
+    $("total").textContent = money(total);
+    $("message").textContent = "";
+    $("order").hidden = false;
+  }
+
+  async function respond(response) {
+    $("approve").disabled = true;
+    $("reject").disabled = true;
+    $("message").textContent = "Yanıtınız kaydediliyor…";
+
+    const { error } = await db.rpc("respond_to_order", {
+      p_token_hash: tokenHash,
+      p_response: response,
+      p_note: $("note").value
+    });
+
+    if (error) {
+      $("message").textContent = "Yanıt kaydedilemedi: " + error.message;
+      $("approve").disabled = false;
+      $("reject").disabled = false;
+      return;
+    }
+
+    $("order").hidden = true;
+    $("message").textContent =
+      response === "approved"
+        ? "Siparişiniz onaylandı. Teşekkür ederiz."
+        : "Siparişiniz reddedildi. Yanıtınız sisteme kaydedildi.";
+  }
+
+  $("approve").addEventListener("click", () => respond("approved"));
+  $("reject").addEventListener("click", () => respond("rejected"));
+
+  loadOrder();
+</script>
+</body>
+</html>
