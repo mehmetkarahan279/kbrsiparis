@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBR | Alıcı Yönetimi</title>
+  <style>
+    body { font:16px Arial,sans-serif; max-width:950px; margin:35px auto; padding:0 16px; background:#f3f5f7; color:#1f2937; }
+    section { background:#fff; padding:20px; margin:16px 0; border-radius:10px; }
+    input,button { box-sizing:border-box; width:100%; padding:11px; margin:6px 0 14px; font:inherit; }
+    button { background:#17633d; color:white; border:0; border-radius:6px; cursor:pointer; }
+    button.secondary { background:#475569; }
+    button.danger { background:#a83232; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { text-align:left; padding:9px; border-bottom:1px solid #ddd; }
+    .scroll { overflow-x:auto; }
+    #message { white-space:pre-wrap; margin:12px 0; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <h1>KBR alıcı yönetimi</h1>
+  <div id="message"></div>
+
+  <section id="login-section">
+    <h2>Admin girişi</h2>
+    <form id="login-form">
+      <label>Admin e-postası</label>
+      <input id="login-email" type="email" required>
+      <label>Şifre</label>
+      <input id="login-password" type="password" required>
+      <button type="submit">Giriş yap</button>
+    </form>
+  </section>
+
+  <div id="admin-panel" class="hidden">
+    <button id="logout-button" class="secondary">Çıkış yap</button>
+
+    <section>
+      <h2>Alıcı ekle / düzenle</h2>
+      <form id="customer-form">
+        <input id="customer-id" type="hidden">
+
+        <label>Alıcı / firma adı</label>
+        <input id="customer-name" required>
+
+        <label>E-posta</label>
+        <input id="customer-email" type="email" required>
+
+        <label>Telefon</label>
+        <input id="customer-phone">
+
+        <label>Adres</label>
+        <input id="customer-address">
+
+        <button type="submit">Kaydet</button>
+        <button type="button" id="cancel-edit" class="secondary">Temizle</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Kayıtlı alıcılar</h2>
+      <button id="refresh-button" class="secondary">Listeyi yenile</button>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr><th>Alıcı</th><th>E-posta</th><th>Telefon</th><th>Durum</th><th>İşlem</th></tr>
+          </thead>
+          <tbody id="customers-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+    const PUBLIC_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+    const db = window.supabase.createClient(SUPABASE_URL, PUBLIC_KEY);
+    const $ = id => document.getElementById(id);
+
+    let currentUser;
+    let customers = [];
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function showMessage(text, error = false) {
+      $("message").textContent = text;
+      $("message").style.color = error ? "#a83232" : "#17633d";
+    }
+
+    async function openAdmin(user) {
+      const { data, error } = await db.from("profiles")
+        .select("role, active")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !data?.active || data.role !== "admin") {
+        await db.auth.signOut();
+        $("login-section").classList.remove("hidden");
+        return showMessage("Bu sayfayı yalnızca aktif admin kullanabilir.", true);
+      }
+
+      currentUser = user;
+      $("login-section").classList.add("hidden");
+      $("admin-panel").classList.remove("hidden");
+      await loadCustomers();
+    }
+
+    async function loadCustomers() {
+      const { data, error } = await db.from("customers")
+        .select("*")
+        .order("name");
+
+      if (error) return showMessage("Alıcılar yüklenemedi: " + error.message, true);
+
+      customers = data || [];
+      $("customers-body").innerHTML = customers.map(c => `
+        <tr>
+          <td>${escapeHtml(c.name)}</td>
+          <td>${escapeHtml(c.email)}</td>
+          <td>${escapeHtml(c.phone || "")}</td>
+          <td>${c.active ? "Aktif" : "Pasif"}</td>
+          <td>
+            <button class="secondary edit-button" data-id="${c.id}">Düzenle</button>
+            <button class="${c.active ? "danger" : "secondary"} toggle-button" data-id="${c.id}">
+              ${c.active ? "Pasifleştir" : "Aktifleştir"}
+            </button>
+          </td>
+        </tr>
+      `).join("");
+
+      document.querySelectorAll(".edit-button").forEach(button => {
+        button.addEventListener("click", () => {
+          const c = customers.find(x => String(x.id) === button.dataset.id);
+          if (!c) return;
+          $("customer-id").value = c.id;
+          $("customer-name").value = c.name;
+          $("customer-email").value = c.email;
+          $("customer-phone").value = c.phone || "";
+          $("customer-address").value = c.address || "";
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+
+      document.querySelectorAll(".toggle-button").forEach(button => {
+        button.addEventListener("click", async () => {
+          const c = customers.find(x => String(x.id) === button.dataset.id);
+          if (!c) return;
+          const { error } = await db.from("customers")
+            .update({ active: !c.active, updated_at: new Date().toISOString() })
+            .eq("id", c.id);
+          if (error) return showMessage("Durum değiştirilemedi: " + error.message, true);
+          showMessage("Alıcı durumu güncellendi.");
+          await loadCustomers();
+        });
+      });
+    }
+
+    $("login-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      showMessage("Giriş yapılıyor…");
+      const { data, error } = await db.auth.signInWithPassword({
+        email: $("login-email").value,
+        password: $("login-password").value
+      });
+      if (error) return showMessage("Giriş başarısız: " + error.message, true);
+      await openAdmin(data.user);
+    });
+
+    $("customer-form").addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const id = $("customer-id").value;
+      const record = {
+        name: $("customer-name").value.trim(),
+        email: $("customer-email").value.trim(),
+        phone: $("customer-phone").value.trim() || null,
+        address: $("customer-address").value.trim() || null,
+        updated_at: new Date().toISOString()
+      };
+
+      const result = id
+        ? await db.from("customers").update(record).eq("id", id)
+        : await db.from("customers").insert({
+            ...record,
+            created_by: currentUser.id
+          });
+
+      if (result.error) {
+        return showMessage("Kaydedilemedi: " + result.error.message, true);
+      }
+
+      $("customer-form").reset();
+      $("customer-id").value = "";
+      showMessage("Alıcı kaydedildi.");
+      await loadCustomers();
+    });
+
+    $("cancel-edit").addEventListener("click", () => {
+      $("customer-form").reset();
+      $("customer-id").value = "";
+    });
+
+    $("refresh-button").addEventListener("click", loadCustomers);
+    $("logout-button").addEventListener("click", async () => {
+      await db.auth.signOut();
+      location.reload();
+    });
+
+    db.auth.getSession().then(async ({ data }) => {
+      if (data.session) await openAdmin(data.session.user);
+    });
+  </script>
+</body>
+</html>
