@@ -3,70 +3,175 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KBR Sipariş Onayı</title>
+  <title>KBR Sipariş Özeti ve Onayı</title>
   <style>
-    body { font: 16px Arial, sans-serif; background:#f3f5f7; color:#1f2937; margin:0; }
-    main { max-width:750px; margin:35px auto; padding:20px; background:white; border-radius:10px; }
-    table { width:100%; border-collapse:collapse; margin:15px 0; }
-    th,td { text-align:left; padding:9px; border-bottom:1px solid #ddd; }
-    textarea { width:100%; min-height:90px; padding:10px; box-sizing:border-box; }
-    button { padding:12px 16px; border:0; border-radius:6px; color:white; cursor:pointer; margin:8px 8px 0 0; }
-    .approve { background:#17633d; }
-    .reject { background:#a83232; }
-    #message { white-space:pre-wrap; margin:14px 0; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font: 15px Arial, sans-serif;
+      color: #1f2937;
+      background: #f3f5f7;
+    }
+    main {
+      max-width: 850px;
+      margin: 20px auto;
+      padding: 22px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px #00000012;
+    }
+    h1 { color: #163c2b; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+    }
+    th, td {
+      padding: 9px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    .scroll { overflow-x: auto; }
+    .info {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 7px;
+      padding: 14px;
+      margin: 14px 0;
+      line-height: 1.7;
+    }
+    .totals {
+      max-width: 460px;
+      margin-left: auto;
+      line-height: 1.8;
+    }
+    .discounts {
+      overflow-wrap: anywhere;
+      color: #334155;
+    }
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font: inherit;
+    }
+    button {
+      padding: 12px 16px;
+      margin: 10px 8px 0 0;
+      border: 0;
+      border-radius: 6px;
+      color: white;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .approve { background: #17633d; }
+    .reject { background: #a83232; }
+    #message { margin: 14px 0; white-space: pre-wrap; }
+    .hidden { display: none !important; }
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      main { padding: 15px; }
+      th, td { padding: 7px; font-size: 13px; }
+    }
   </style>
 </head>
 <body>
 <main>
   <h1>KBR Sipariş Özeti</h1>
-  <div id="message">Sipariş yükleniyor…</div>
-  <div id="order" hidden>
-    <p><strong>Sipariş no:</strong> <span id="order-number"></span></p>
-    <p><strong>Alıcı:</strong> <span id="customer-name"></span></p>
-    <table>
-      <thead>
-        <tr><th>Kod</th><th>Ürün</th><th>Adet</th><th>Birim fiyat</th><th>Tutar</th></tr>
-      </thead>
-      <tbody id="items"></tbody>
-    </table>
-    <p><strong>Toplam: <span id="total"></span></strong></p>
-    <label for="note">Notunuz (isteğe bağlı)</label>
-    <textarea id="note" maxlength="1000"></textarea>
-    <div>
-      <button class="approve" id="approve">Siparişi onayla</button>
-      <button class="reject" id="reject">Siparişi reddet</button>
+  <div id="message" role="status">Sipariş yükleniyor…</div>
+
+  <div id="order" class="hidden">
+    <div class="info">
+      <div><strong>Sipariş no:</strong> <span id="order-number"></span></div>
+      <div><strong>Alıcı:</strong> <span id="customer-name"></span></div>
+      <div><strong>Yetkili:</strong> <span id="authorized-name"></span></div>
+      <div><strong>Ödeme vadesi:</strong> <span id="payment-term"></span></div>
+      <div><strong>Ödeme şekli:</strong> <span id="payment-method"></span></div>
+      <div><strong>Teslimat adresi:</strong> <span id="delivery-address"></span></div>
+      <div><strong>Teslim şekli:</strong> <span id="delivery-method"></span></div>
     </div>
+
+    <h2>Sipariş kalemleri</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Kod</th>
+            <th>Ürün</th>
+            <th>Adet</th>
+            <th>Birim fiyat</th>
+            <th>Tutar</th>
+          </tr>
+        </thead>
+        <tbody id="items"></tbody>
+      </table>
+    </div>
+
+    <div class="totals">
+      <div>Ara toplam: <strong id="subtotal"></strong></div>
+      <div>İskontolar: <strong class="discounts" id="discounts"></strong></div>
+      <div>İskonto tutarı: <strong id="discount-amount"></strong></div>
+      <div style="font-size:18px; margin-top:6px;">
+        Net toplam: <strong id="total"></strong>
+      </div>
+    </div>
+
+    <div class="info">
+      <label for="note"><strong>Notunuz (isteğe bağlı)</strong></label>
+      <textarea id="note" maxlength="1000"></textarea>
+    </div>
+
+    <button type="button" class="approve" id="approve">Siparişi onayla</button>
+    <button type="button" class="reject" id="reject">Siparişi reddet</button>
   </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const DB_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
-  const DB_PUBLIC_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
-  const db = window.supabase.createClient(DB_URL, DB_PUBLIC_KEY);
+  const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "BURAYA_PUBLISHABLE_KEY";
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
 
   const $ = id => document.getElementById(id);
-  const token = new URLSearchParams(location.search).get("token");
+  const token = new URLSearchParams(window.location.search).get("token");
 
-  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
+  let tokenHash = "";
 
-  const money = value => Number(value || 0).toLocaleString("tr-TR", {
-    style: "currency", currency: "TRY"
-  });
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[character]));
+  }
+
+  function money(value) {
+    return Number(value || 0).toLocaleString("tr-TR", {
+      style: "currency",
+      currency: "TRY"
+    });
+  }
 
   async function hashToken(value) {
     const digest = await crypto.subtle.digest(
       "SHA-256",
       new TextEncoder().encode(value)
     );
-    return Array.from(new Uint8Array(digest), b =>
-      b.toString(16).padStart(2, "0")
+
+    return Array.from(new Uint8Array(digest), byte =>
+      byte.toString(16).padStart(2, "0")
     ).join("");
   }
-
-  let tokenHash = "";
 
   async function loadOrder() {
     if (!token) {
@@ -74,36 +179,76 @@
       return;
     }
 
-    tokenHash = await hashToken(token);
+    try {
+      tokenHash = await hashToken(token);
 
-    const { data, error } = await db.rpc("get_order_by_token", {
-      p_token_hash: tokenHash
-    });
+      const { data, error } = await db.rpc("get_order_by_token", {
+        p_token_hash: tokenHash
+      });
 
-    if (error || !data) {
+      if (error || !data) {
+        $("message").textContent =
+          "Sipariş bulunamadı. Bağlantı süresi dolmuş veya sipariş daha önce yanıtlanmış olabilir.";
+        return;
+      }
+
+      $("order-number").textContent = data.order_number || "";
+      $("customer-name").textContent = data.customer_name || "";
+      $("authorized-name").textContent = data.authorized_name || "—";
+      $("payment-term").textContent = data.payment_term || "—";
+      $("payment-method").textContent = data.payment_method || "—";
+      $("delivery-address").textContent = data.delivery_address || "—";
+      $("delivery-method").textContent = data.delivery_method || "—";
+
+      const items = data.items || [];
+      let itemSubtotal = 0;
+
+      $("items").innerHTML = items.map(item => {
+        itemSubtotal += Number(item.line_total || 0);
+
+        return `<tr>
+          <td>${escapeHtml(item.product_code)}</td>
+          <td>${escapeHtml(item.description)}</td>
+          <td>${escapeHtml(item.quantity)}</td>
+          <td>${money(item.unit_price)}</td>
+          <td>${money(item.line_total)}</td>
+        </tr>`;
+      }).join("");
+
+      const rates = [1, 2, 3, 4, 5].map(i =>
+        Number(data["isk" + i] || 0)
+      );
+
+      let calculatedTotal = Number(data.subtotal ?? itemSubtotal);
+
+      for (const rate of rates) {
+        calculatedTotal *= (100 - rate) / 100;
+      }
+
+      calculatedTotal = Math.round(
+        (calculatedTotal + Number.EPSILON) * 100
+      ) / 100;
+
+      const subtotal = Number(data.subtotal ?? itemSubtotal);
+      const discountAmount = Number(
+        data.discount_amount ?? (subtotal - calculatedTotal)
+      );
+      const total = Number(data.total_amount ?? calculatedTotal);
+
+      $("subtotal").textContent = money(subtotal);
+      $("discounts").textContent = rates
+        .map((rate, index) => `İSK${index + 1}: ${rate}%`)
+        .join(" | ");
+      $("discount-amount").textContent = money(discountAmount);
+      $("total").textContent = money(total);
+
+      $("message").textContent = "";
+      $("order").classList.remove("hidden");
+    } catch (error) {
       $("message").textContent =
-        "Sipariş bulunamadı. Bağlantı süresi dolmuş veya sipariş zaten yanıtlanmış olabilir.";
-      return;
+        "Sipariş yüklenirken hata oluştu: " +
+        (error instanceof Error ? error.message : "Bilinmeyen hata.");
     }
-
-    $("order-number").textContent = data.order_number;
-    $("customer-name").textContent = data.customer_name;
-
-    let total = 0;
-    $("items").innerHTML = (data.items || []).map(item => {
-      total += Number(item.line_total || 0);
-      return `<tr>
-        <td>${escapeHtml(item.product_code)}</td>
-        <td>${escapeHtml(item.description)}</td>
-        <td>${escapeHtml(item.quantity)}</td>
-        <td>${money(item.unit_price)}</td>
-        <td>${money(item.line_total)}</td>
-      </tr>`;
-    }).join("");
-
-    $("total").textContent = money(total);
-    $("message").textContent = "";
-    $("order").hidden = false;
   }
 
   async function respond(response) {
@@ -124,11 +269,10 @@
       return;
     }
 
-    $("order").hidden = true;
-    $("message").textContent =
-      response === "approved"
-        ? "Siparişiniz onaylandı. Teşekkür ederiz."
-        : "Siparişiniz reddedildi. Yanıtınız sisteme kaydedildi.";
+    $("order").classList.add("hidden");
+    $("message").textContent = response === "approved"
+      ? "Siparişiniz onaylandı. Teşekkür ederiz."
+      : "Siparişiniz reddedildi. Yanıtınız sisteme kaydedildi.";
   }
 
   $("approve").addEventListener("click", () => respond("approved"));
