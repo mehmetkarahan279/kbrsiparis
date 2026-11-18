@@ -603,9 +603,16 @@ $("order-form").addEventListener("submit", async event => {
 
   if (currentProfile.role !== "seller") {
     return message("Siparişi yalnızca satıcı oluşturabilir.", true);
-  }const customer = customers.find(
-  c => String(c.id) === $("customer-select").value
-);
+    }
+
+  const customer = customers.find(
+    c => String(c.id) === $("customer-select").value
+  );
+
+  if (!customer) {
+    return message("Lütfen kayıtlı alıcı listesinden seçim yapın.", true);
+  }
+
 
 if (!customer) {
   return message("Lütfen kayıtlı alıcı listesinden seçim yapın.", true);
