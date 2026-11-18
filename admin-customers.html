@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KBR | Alıcı Yönetimi</title>
   <style>
-    body { font:16px Arial,sans-serif; max-width:950px; margin:35px auto; padding:0 16px; background:#f3f5f7; color:#1f2937; }
+    body { font:16px Arial,sans-serif; max-width:1000px; margin:35px auto; padding:0 16px; background:#f3f5f7; color:#1f2937; }
     section { background:#fff; padding:20px; margin:16px 0; border-radius:10px; }
     input,button { box-sizing:border-box; width:100%; padding:11px; margin:6px 0 14px; font:inherit; }
     button { background:#17633d; color:white; border:0; border-radius:6px; cursor:pointer; }
@@ -44,14 +44,23 @@
         <label>Alıcı / firma adı</label>
         <input id="customer-name" required>
 
+        <label>Yetkili adı soyadı</label>
+        <input id="authorized-name" required>
+
         <label>E-posta</label>
         <input id="customer-email" type="email" required>
 
         <label>Telefon</label>
         <input id="customer-phone">
 
-        <label>Adres</label>
-        <input id="customer-address">
+        <label>Ödeme vadesi</label>
+        <input id="payment-term" placeholder="Örnek: Peşin, 30 gün, 60 gün">
+
+        <label>Teslimat adresi</label>
+        <input id="delivery-address" required>
+
+        <label>Teslim şekli</label>
+        <input id="delivery-method" placeholder="Örnek: Ambar, müşteri aracı, sevkiyat">
 
         <button type="submit">Kaydet</button>
         <button type="button" id="cancel-edit" class="secondary">Temizle</button>
@@ -64,7 +73,10 @@
       <div class="scroll">
         <table>
           <thead>
-            <tr><th>Alıcı</th><th>E-posta</th><th>Telefon</th><th>Durum</th><th>İşlem</th></tr>
+            <tr>
+              <th>Alıcı</th><th>Yetkili</th><th>E-posta</th>
+              <th>Vade</th><th>Teslim şekli</th><th>Durum</th><th>İşlem</th>
+            </tr>
           </thead>
           <tbody id="customers-body"></tbody>
         </table>
@@ -75,7 +87,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
-    const PUBLIC_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+    const PUBLIC_KEY = "BURAYA_PUBLISHABLE_KEY";
     const db = window.supabase.createClient(SUPABASE_URL, PUBLIC_KEY);
     const $ = id => document.getElementById(id);
 
@@ -122,8 +134,10 @@
       $("customers-body").innerHTML = customers.map(c => `
         <tr>
           <td>${escapeHtml(c.name)}</td>
+          <td>${escapeHtml(c.authorized_name || "")}</td>
           <td>${escapeHtml(c.email)}</td>
-          <td>${escapeHtml(c.phone || "")}</td>
+          <td>${escapeHtml(c.payment_term || "")}</td>
+          <td>${escapeHtml(c.delivery_method || "")}</td>
           <td>${c.active ? "Aktif" : "Pasif"}</td>
           <td>
             <button class="secondary edit-button" data-id="${c.id}">Düzenle</button>
@@ -139,10 +153,13 @@
           const c = customers.find(x => String(x.id) === button.dataset.id);
           if (!c) return;
           $("customer-id").value = c.id;
-          $("customer-name").value = c.name;
-          $("customer-email").value = c.email;
+          $("customer-name").value = c.name || "";
+          $("authorized-name").value = c.authorized_name || "";
+          $("customer-email").value = c.email || "";
           $("customer-phone").value = c.phone || "";
-          $("customer-address").value = c.address || "";
+          $("payment-term").value = c.payment_term || "";
+          $("delivery-address").value = c.delivery_address || "";
+          $("delivery-method").value = c.delivery_method || "";
           window.scrollTo({ top: 0, behavior: "smooth" });
         });
       });
@@ -178,9 +195,12 @@
       const id = $("customer-id").value;
       const record = {
         name: $("customer-name").value.trim(),
+        authorized_name: $("authorized-name").value.trim(),
         email: $("customer-email").value.trim(),
         phone: $("customer-phone").value.trim() || null,
-        address: $("customer-address").value.trim() || null,
+        payment_term: $("payment-term").value.trim() || null,
+        delivery_address: $("delivery-address").value.trim(),
+        delivery_method: $("delivery-method").value.trim() || null,
         updated_at: new Date().toISOString()
       };
 
@@ -207,6 +227,7 @@
     });
 
     $("refresh-button").addEventListener("click", loadCustomers);
+
     $("logout-button").addEventListener("click", async () => {
       await db.auth.signOut();
       location.reload();
