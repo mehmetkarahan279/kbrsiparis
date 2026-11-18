@@ -594,22 +594,18 @@ async function loadCustomers() {
   $("order-discount-total").textContent = money(subtotal - net);
   $("order-total").textContent = money(net);
 }
-
 document.querySelectorAll(".discount-input").forEach(input => {
   input.addEventListener("input", calculateTotal);
 });
 
-  }
+$("add-line").addEventListener("click", addOrderLine);
 
-  $("add-line").addEventListener("click", addOrderLine);
+$("order-form").addEventListener("submit", async event => {
+  event.preventDefault();
 
-  $("order-form").addEventListener("submit", async event => {
-    event.preventDefault();
-
-    if (currentProfile.role !== "seller") {
-      return message("Siparişi yalnızca satıcı oluşturabilir.", true);
-    }
-const customer = customers.find(
+  if (currentProfile.role !== "seller") {
+    return message("Siparişi yalnızca satıcı oluşturabilir.", true);
+  }const customer = customers.find(
   c => String(c.id) === $("customer-select").value
 );
 
