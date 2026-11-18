@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KBR Sipariş Özeti ve Onayı</title>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       padding: 20px;
@@ -13,27 +15,34 @@
       color: #1f2937;
       background: #f3f5f7;
     }
+
     main {
-      max-width: 850px;
+      max-width: 1100px;
       margin: 20px auto;
       padding: 22px;
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 2px 12px #00000012;
     }
+
     h1 { color: #163c2b; }
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin: 14px 0;
+      min-width: 850px;
     }
+
     th, td {
       padding: 9px;
       text-align: left;
       border-bottom: 1px solid #e2e8f0;
       vertical-align: top;
     }
+
     .scroll { overflow-x: auto; }
+
     .info {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -42,15 +51,19 @@
       margin: 14px 0;
       line-height: 1.7;
     }
+
     .totals {
       max-width: 460px;
-      margin-left: auto;
-      line-height: 1.8;
+      margin: 14px 0 14px auto;
+      line-height: 1.9;
     }
+
     .discounts {
-      overflow-wrap: anywhere;
-      color: #334155;
+      min-width: 250px;
+      font-size: 12px;
+      line-height: 1.6;
     }
+
     textarea {
       width: 100%;
       min-height: 90px;
@@ -59,27 +72,34 @@
       border-radius: 6px;
       font: inherit;
     }
+
     button {
       padding: 12px 16px;
       margin: 10px 8px 0 0;
       border: 0;
       border-radius: 6px;
-      color: white;
+      color: #fff;
       font: inherit;
       cursor: pointer;
     }
-    button:disabled { opacity: .55; cursor: not-allowed; }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
     .approve { background: #17633d; }
     .reject { background: #a83232; }
     #message { margin: 14px 0; white-space: pre-wrap; }
     .hidden { display: none !important; }
+
     @media (max-width: 600px) {
       body { padding: 10px; }
       main { padding: 15px; }
-      th, td { padding: 7px; font-size: 13px; }
     }
   </style>
 </head>
+
 <body>
 <main>
   <h1>KBR Sipariş Özeti</h1>
@@ -105,7 +125,10 @@
             <th>Ürün</th>
             <th>Adet</th>
             <th>Birim fiyat</th>
-            <th>Tutar</th>
+            <th>Ara tutar</th>
+            <th>Ürün iskontoları</th>
+            <th>İskonto tutarı</th>
+            <th>Net tutar</th>
           </tr>
         </thead>
         <tbody id="items"></tbody>
@@ -114,8 +137,7 @@
 
     <div class="totals">
       <div>Ara toplam: <strong id="subtotal"></strong></div>
-      <div>İskontolar: <strong class="discounts" id="discounts"></strong></div>
-      <div>İskonto tutarı: <strong id="discount-amount"></strong></div>
+      <div>Toplam iskonto: <strong id="discount-amount"></strong></div>
       <div style="font-size:18px; margin-top:6px;">
         Net toplam: <strong id="total"></strong>
       </div>
@@ -135,6 +157,7 @@
 <script>
   const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+
   const db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY
@@ -186,7 +209,13 @@
         p_token_hash: tokenHash
       });
 
-      if (error || !data) {
+      if (error) {
+        $("message").textContent =
+          "Sipariş bilgileri alınamadı: " + error.message;
+        return;
+      }
+
+      if (!data) {
         $("message").textContent =
           "Sipariş bulunamadı. Bağlantı süresi dolmuş veya sipariş daha önce yanıtlanmış olabilir.";
         return;
@@ -200,47 +229,34 @@
       $("delivery-address").textContent = data.delivery_address || "—";
       $("delivery-method").textContent = data.delivery_method || "—";
 
-      const items = data.items || [];
-      let itemSubtotal = 0;
+      const items = Array.isArray(data.items) ? data.items : [];
 
       $("items").innerHTML = items.map(item => {
-        itemSubtotal += Number(item.line_total || 0);
+        const rates = [1, 2, 3, 4, 5].map(index =>
+          Number(item["isk" + index] || 0)
+        );
 
-        return `<tr>
-          <td>${escapeHtml(item.product_code)}</td>
-          <td>${escapeHtml(item.description)}</td>
-          <td>${escapeHtml(item.quantity)}</td>
-          <td>${money(item.unit_price)}</td>
-          <td>${money(item.line_total)}</td>
-        </tr>`;
+        const discountText = rates.map((rate, index) =>
+          `İSK${index + 1}: ${rate}%`
+        ).join(" | ");
+
+        return `
+          <tr>
+            <td>${escapeHtml(item.product_code)}</td>
+            <td>${escapeHtml(item.description)}</td>
+            <td>${escapeHtml(item.quantity)}</td>
+            <td>${money(item.unit_price)}</td>
+            <td>${money(item.line_total)}</td>
+            <td class="discounts">${escapeHtml(discountText)}</td>
+            <td>${money(item.discount_amount)}</td>
+            <td><strong>${money(item.net_total)}</strong></td>
+          </tr>
+        `;
       }).join("");
 
-      const rates = [1, 2, 3, 4, 5].map(i =>
-        Number(data["isk" + i] || 0)
-      );
-
-      let calculatedTotal = Number(data.subtotal ?? itemSubtotal);
-
-      for (const rate of rates) {
-        calculatedTotal *= (100 - rate) / 100;
-      }
-
-      calculatedTotal = Math.round(
-        (calculatedTotal + Number.EPSILON) * 100
-      ) / 100;
-
-      const subtotal = Number(data.subtotal ?? itemSubtotal);
-      const discountAmount = Number(
-        data.discount_amount ?? (subtotal - calculatedTotal)
-      );
-      const total = Number(data.total_amount ?? calculatedTotal);
-
-      $("subtotal").textContent = money(subtotal);
-      $("discounts").textContent = rates
-        .map((rate, index) => `İSK${index + 1}: ${rate}%`)
-        .join(" | ");
-      $("discount-amount").textContent = money(discountAmount);
-      $("total").textContent = money(total);
+      $("subtotal").textContent = money(data.subtotal);
+      $("discount-amount").textContent = money(data.discount_amount);
+      $("total").textContent = money(data.total_amount);
 
       $("message").textContent = "";
       $("order").classList.remove("hidden");
