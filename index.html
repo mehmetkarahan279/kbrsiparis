@@ -597,9 +597,7 @@ async function loadCustomers() {
 document.querySelectorAll(".discount-input").forEach(input => {
   input.addEventListener("input", calculateTotal);
 });
-
 $("add-line").addEventListener("click", addOrderLine);
-
 $("order-form").addEventListener("submit", async event => {
   event.preventDefault();
 
