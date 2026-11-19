@@ -7,113 +7,47 @@
 
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font: 15px Arial, sans-serif;
-      color: #1f2937;
-      background: #f3f5f7;
-    }
-    header {
-      background: #163c2b;
-      color: white;
-      padding: 16px 24px;
-    }
-    main {
-      max-width: 1150px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
-    section {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 18px;
-    }
-    input, select, button {
-      font: inherit;
-      padding: 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-    }
-    input, select { max-width: 100%; }
+    body { margin:0; font:15px Arial,sans-serif; color:#1f2937; background:#f3f5f7; }
+    header { background:#163c2b; color:white; padding:16px 24px; }
+    main { max-width:1150px; margin:24px auto; padding:0 16px; }
+    section { background:white; border-radius:10px; padding:20px; margin-bottom:18px; }
+    input, select, button { font:inherit; padding:10px; border:1px solid #cbd5e1; border-radius:6px; }
     button, .nav-link {
-      cursor: pointer;
-      background: #17633d;
-      color: white;
-      border: 0;
-      border-radius: 6px;
-      padding: 10px;
-      text-decoration: none;
-      display: inline-block;
+      cursor:pointer; background:#17633d; color:white; border:0;
+      border-radius:6px; padding:10px; text-decoration:none; display:inline-block;
     }
-    button.secondary { background: #475569; }
-    button.danger { background: #a83232; }
-    button:disabled { opacity: .55; cursor: not-allowed; }
-    nav {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin: 12px 0;
-    }
-    .field {
-      display: grid;
-      gap: 6px;
-      margin: 10px 0;
-    }
-    .field input, .field select { width: 100%; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-    th, td {
-      text-align: left;
-      padding: 9px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: top;
-    }
-    .scroll { overflow-x: auto; }
-    #message {
-      margin: 12px 0;
-      white-space: pre-wrap;
-    }
-    .hidden { display: none !important; }
+    button.secondary { background:#475569; }
+    button.danger { background:#a83232; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    nav { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+    .field { display:grid; gap:6px; margin:10px 0; }
+    .field input, .field select { width:100%; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th, td { text-align:left; padding:9px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+    .scroll { overflow-x:auto; }
+    #message { margin:12px 0; white-space:pre-wrap; }
+    .hidden { display:none !important; }
 
     .line {
-      display: grid;
-      grid-template-columns: minmax(210px, 1fr) 85px minmax(230px, 1fr) 130px 65px;
-      gap: 8px;
-      margin: 12px 0;
-      padding: 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      align-items: center;
+      display:grid;
+      grid-template-columns:minmax(210px,1fr) 85px minmax(230px,1fr) 130px 65px;
+      gap:8px;
+      margin:12px 0;
+      padding:12px;
+      border:1px solid #e2e8f0;
+      border-radius:8px;
+      align-items:center;
     }
-    .line select, .line input { width: 100%; }
-    .line-discounts {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .line-discounts label {
-      font-size: 11px;
-      color: #475569;
-    }
-    .line-discounts input {
-      display: block;
-      width: 68px;
-      padding: 7px;
-      margin-top: 3px;
-    }
-    .line-total {
-      font-size: 13px;
-      font-weight: bold;
-    }
+    .line select, .line input { width:100%; }
+    .line-discounts { display:flex; flex-wrap:wrap; gap:6px; }
+    .line-discounts label { font-size:11px; color:#475569; }
+    .line-discounts input { display:block; width:68px; padding:7px; margin-top:3px; }
+    .line-total { font-size:13px; font-weight:bold; }
 
-    @media (max-width: 850px) {
-      .line { grid-template-columns: 1fr 80px; }
-      .line-discounts { grid-column: 1 / -1; }
-      .line-total { grid-column: 1; }
+    @media (max-width:850px) {
+      .line { grid-template-columns:1fr 80px; }
+      .line-discounts { grid-column:1 / -1; }
+      .line-total { grid-column:1; }
     }
   </style>
 </head>
@@ -159,6 +93,10 @@
     <section id="orders-page">
       <h2>Siparişler</h2>
       <button type="button" id="refresh-orders" class="secondary">Listeyi yenile</button>
+      <button type="button" id="delete-all-orders" class="danger hidden">
+        Tüm siparişleri sil
+      </button>
+
       <div class="scroll">
         <table>
           <thead>
@@ -168,7 +106,7 @@
               <th>E-posta</th>
               <th>Durum</th>
               <th>Tarih</th>
-              <th>Detay</th>
+              <th>Detay / İşlem</th>
             </tr>
           </thead>
           <tbody id="orders-body"></tbody>
@@ -212,7 +150,6 @@
         <p>Her ürün için İSK1–İSK5 oranlarını ayrı girin. İskontolar sırayla uygulanır.</p>
 
         <div id="order-lines"></div>
-
         <button type="button" id="add-line" class="secondary">Ürün ekle</button>
 
         <p>Ara toplam: <span id="order-subtotal">0,00 TL</span></p>
@@ -227,22 +164,15 @@
       <h2>Ürünler</h2>
       <p>Excel başlıkları: kod, açıklama, barkod, paket içi, koli içi, palet içi, fiyat.</p>
 
-      <div>
-        <input id="excel-file" type="file" accept=".xlsx,.xls,.csv">
-        <button type="button" id="import-button">Excel/CSV aktar</button>
-      </div>
+      <input id="excel-file" type="file" accept=".xlsx,.xls,.csv">
+      <button type="button" id="import-button">Excel/CSV aktar</button>
 
       <div class="scroll">
         <table>
           <thead>
             <tr>
-              <th>Kod</th>
-              <th>Açıklama</th>
-              <th>Barkod</th>
-              <th>Paket içi</th>
-              <th>Koli içi</th>
-              <th>Palet içi</th>
-              <th>Fiyat</th>
+              <th>Kod</th><th>Açıklama</th><th>Barkod</th>
+              <th>Paket içi</th><th>Koli içi</th><th>Palet içi</th><th>Fiyat</th>
             </tr>
           </thead>
           <tbody id="products-body"></tbody>
@@ -263,7 +193,7 @@
 
 <script>
   const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+  const SUPABASE_PUBLISHABLE_KEY = "BURAYA_PUBLISHABLE_KEY";
 
   const db = window.supabase.createClient(
     SUPABASE_URL,
@@ -400,6 +330,7 @@
     $("new-order-nav").classList.toggle("hidden", data.role !== "seller");
     $("customers-nav").classList.toggle("hidden", data.role !== "admin");
     $("users-nav").classList.toggle("hidden", data.role !== "admin");
+    $("delete-all-orders").classList.toggle("hidden", data.role !== "admin");
     $("new-order-page").classList.toggle("hidden", data.role !== "seller");
     $("products-page").classList.toggle("hidden", data.role !== "admin");
 
@@ -539,9 +470,7 @@
 
           rows = matrix
             .slice(headerIndex + 1)
-            .filter(row =>
-              row.some(value => String(value ?? "").trim() !== "")
-            )
+            .filter(row => row.some(value => String(value ?? "").trim() !== ""))
             .map(row =>
               Object.fromEntries(
                 headers.map((header, index) => [header, row[index] ?? ""])
@@ -566,9 +495,7 @@
           "description", "productname"
         ])).trim(),
 
-        barcode: String(findColumn(row, [
-          "barkod", "barcode"
-        ])).trim() || null,
+        barcode: String(findColumn(row, ["barkod", "barcode"])).trim() || null,
 
         pack_inner: parseNumber(findColumn(row, [
           "paketici", "paketicinde", "packinner"
@@ -835,7 +762,10 @@
       .insert(orderItems);
 
     if (itemsError) {
-      message("Sipariş taslağı oluştu fakat ürünler eklenemedi: " + itemsError.message, true);
+      message(
+        "Sipariş taslağı oluştu fakat ürünler eklenemedi: " + itemsError.message,
+        true
+      );
       return;
     }
 
@@ -871,14 +801,9 @@
     calculateTotal();
 
     if (emailError) {
-      message(
-        `Sipariş kaydedildi; e-posta gönderilemedi: ${emailDetail}`,
-        true
-      );
+      message(`Sipariş kaydedildi; e-posta gönderilemedi: ${emailDetail}`, true);
     } else {
-      message(
-        `Sipariş ${orderNumber} kaydedildi ve e-posta gönderim hizmetine iletildi.`
-      );
+      message(`Sipariş ${orderNumber} kaydedildi ve e-posta gönderim hizmetine iletildi.`);
     }
 
     showPage("orders-page");
@@ -914,15 +839,20 @@
         </td>
         <td>${new Date(order.created_at).toLocaleDateString("tr-TR")}</td>
         <td>
-          <button type="button" class="secondary show-details" data-id="${escapeHtml(order.id)}">
-            Görüntüle
-          </button>
+          <button type="button" class="secondary show-details"
+                  data-id="${escapeHtml(order.id)}">Görüntüle</button>
+          ${currentProfile.role === "admin"
+            ? `<button type="button" class="danger delete-order"
+                       data-id="${escapeHtml(order.id)}">Sil</button>`
+            : ""}
         </td>
       </tr>
     `).join("");
 
     document.querySelectorAll(".show-details").forEach(button => {
-      button.addEventListener("click", () => showOrderDetails(button.dataset.id));
+      button.addEventListener("click", () =>
+        showOrderDetails(button.dataset.id)
+      );
     });
 
     document.querySelectorAll(".save-status").forEach(button => {
@@ -945,7 +875,58 @@
         }
       });
     });
+
+    document.querySelectorAll(".delete-order").forEach(button => {
+      button.addEventListener("click", async () => {
+        if (currentProfile?.role !== "admin") return;
+
+        const approved = confirm(
+          "Bu sipariş ve ürün satırları kalıcı olarak silinecek. Devam edilsin mi?"
+        );
+
+        if (!approved) return;
+
+        const { error } = await db
+          .from("orders")
+          .delete()
+          .eq("id", button.dataset.id);
+
+        if (error) {
+          message("Sipariş silinemedi: " + error.message, true);
+          return;
+        }
+
+        message("Sipariş silindi.");
+        await loadOrders();
+      });
+    });
   }
+
+  $("delete-all-orders").addEventListener("click", async () => {
+    if (currentProfile?.role !== "admin") {
+      message("Bu işlem yalnızca admin tarafından yapılabilir.", true);
+      return;
+    }
+
+    const confirmation = prompt(
+      "TÜM siparişler kalıcı olarak silinecek. Onaylamak için SİL yazın:"
+    );
+
+    if (confirmation !== "SİL") {
+      message("Silme işlemi iptal edildi.");
+      return;
+    }
+
+    const { data, error } = await db.rpc("admin_delete_all_orders");
+
+    if (error) {
+      message("Siparişler silinemedi: " + error.message, true);
+      return;
+    }
+
+    message(`${data} sipariş silindi.`);
+    await loadOrders();
+  });
 
   async function showOrderDetails(orderId) {
     const { data: order, error: orderError } = await db
@@ -982,13 +963,9 @@
         <table>
           <thead>
             <tr>
-              <th>Kod</th>
-              <th>Ürün</th>
-              <th>Adet</th>
-              <th>Ara toplam</th>
-              <th>İskontolar</th>
-              <th>İskonto tutarı</th>
-              <th>Net tutar</th>
+              <th>Kod</th><th>Ürün</th><th>Adet</th>
+              <th>Ara tutar</th><th>Ürün iskontoları</th>
+              <th>İskonto</th><th>Net tutar</th>
             </tr>
           </thead>
           <tbody>
