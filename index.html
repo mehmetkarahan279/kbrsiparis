@@ -8,22 +8,70 @@
   <style>
     * { box-sizing: border-box; }
     body { margin:0; font:15px Arial,sans-serif; color:#1f2937; background:#f3f5f7; }
-    header { background:#163c2b; color:white; padding:16px 24px; }
+
+    header {
+      background:#163c2b;
+      color:white;
+      padding:14px 24px;
+    }
+
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-height:64px;
+    }
+
+    .brand-logo {
+      display:block;
+      width:150px;
+      max-height:64px;
+      object-fit:contain;
+      background:white;
+      border-radius:6px;
+      padding:4px;
+    }
+
+    .brand-title { font-weight:bold; }
+    #user-info { margin-left:auto; }
+
     main { max-width:1150px; margin:24px auto; padding:0 16px; }
     section { background:white; border-radius:10px; padding:20px; margin-bottom:18px; }
-    input, select, button { font:inherit; padding:10px; border:1px solid #cbd5e1; border-radius:6px; }
-    button, .nav-link {
-      cursor:pointer; background:#17633d; color:white; border:0;
-      border-radius:6px; padding:10px; text-decoration:none; display:inline-block;
+
+    input, select, button {
+      font:inherit;
+      padding:10px;
+      border:1px solid #cbd5e1;
+      border-radius:6px;
     }
+
+    button, .nav-link {
+      cursor:pointer;
+      background:#17633d;
+      color:white;
+      border:0;
+      border-radius:6px;
+      padding:10px;
+      text-decoration:none;
+      display:inline-block;
+    }
+
     button.secondary { background:#475569; }
     button.danger { background:#a83232; }
     button:disabled { opacity:.55; cursor:not-allowed; }
+
     nav { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
     .field { display:grid; gap:6px; margin:10px 0; }
     .field input, .field select { width:100%; }
+
     table { width:100%; border-collapse:collapse; margin-top:12px; }
-    th, td { text-align:left; padding:9px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+    th, td {
+      text-align:left;
+      padding:9px;
+      border-bottom:1px solid #e2e8f0;
+      vertical-align:top;
+    }
+
     .scroll { overflow-x:auto; }
     #message { margin:12px 0; white-space:pre-wrap; }
     .hidden { display:none !important; }
@@ -38,6 +86,7 @@
       border-radius:8px;
       align-items:center;
     }
+
     .line select, .line input { width:100%; }
     .line-discounts { display:flex; flex-wrap:wrap; gap:6px; }
     .line-discounts label { font-size:11px; color:#475569; }
@@ -49,13 +98,26 @@
       .line-discounts { grid-column:1 / -1; }
       .line-total { grid-column:1; }
     }
+
+    @media (max-width:550px) {
+      header { padding:12px; }
+      .brand { gap:9px; flex-wrap:wrap; }
+      .brand-logo { width:110px; }
+      .brand-title { font-size:14px; }
+      #user-info { margin-left:0; }
+    }
   </style>
 </head>
 
 <body>
-<header>
-  <strong>KBR Piknik Ürünleri — Sipariş Yönetimi</strong>
-  <span id="user-info" style="float:right"></span>
+<header class="brand">
+  <img
+    class="brand-logo"
+    src="https://mehmetkarahan279.github.io/kbrsiparis/kbr-logo.png"
+    alt="KBR Piknik Ürünleri logosu"
+  >
+  <strong class="brand-title">KBR Piknik Ürünleri — Sipariş Yönetimi</strong>
+  <span id="user-info"></span>
 </header>
 
 <main>
@@ -101,12 +163,8 @@
         <table>
           <thead>
             <tr>
-              <th>Sipariş no</th>
-              <th>Alıcı</th>
-              <th>E-posta</th>
-              <th>Durum</th>
-              <th>Tarih</th>
-              <th>Detay / İşlem</th>
+              <th>Sipariş no</th><th>Alıcı</th><th>E-posta</th>
+              <th>Durum</th><th>Tarih</th><th>Detay / İşlem</th>
             </tr>
           </thead>
           <tbody id="orders-body"></tbody>
@@ -155,7 +213,6 @@
         <p>Ara toplam: <span id="order-subtotal">0,00 TL</span></p>
         <p>İskonto toplamı: <span id="order-discount-total">0,00 TL</span></p>
         <p><strong>Net toplam: <span id="order-total">0,00 TL</span></strong></p>
-
         <button type="submit">Siparişi gönder</button>
       </form>
     </section>
@@ -209,11 +266,7 @@
 
   const escapeHtml = value =>
     String(value ?? "").replace(/[&<>"']/g, character => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     }[character]));
 
   const money = value =>
@@ -238,16 +291,13 @@
     ["orders-page", "new-order-page", "products-page"].forEach(page => {
       $(page).classList.toggle("hidden", page !== id);
     });
-
     if (id === "orders-page") loadOrders();
     if (id === "products-page") loadProducts();
   }
 
   async function loadProducts() {
-    const { data, error } = await db
-      .from("products")
-      .select("*")
-      .order("product_code");
+    const { data, error } = await db.from("products")
+      .select("*").order("product_code");
 
     if (error) {
       message("Ürünler yüklenemedi: " + error.message, true);
@@ -256,15 +306,15 @@
 
     products = data || [];
 
-    $("products-body").innerHTML = products.map(product => `
+    $("products-body").innerHTML = products.map(p => `
       <tr>
-        <td>${escapeHtml(product.product_code)}</td>
-        <td>${escapeHtml(product.description)}</td>
-        <td>${escapeHtml(product.barcode || "")}</td>
-        <td>${escapeHtml(product.pack_inner ?? "")}</td>
-        <td>${escapeHtml(product.carton_inner ?? "")}</td>
-        <td>${escapeHtml(product.pallet_inner ?? "")}</td>
-        <td>${money(product.price)}</td>
+        <td>${escapeHtml(p.product_code)}</td>
+        <td>${escapeHtml(p.description)}</td>
+        <td>${escapeHtml(p.barcode || "")}</td>
+        <td>${escapeHtml(p.pack_inner ?? "")}</td>
+        <td>${escapeHtml(p.carton_inner ?? "")}</td>
+        <td>${escapeHtml(p.pallet_inner ?? "")}</td>
+        <td>${money(p.price)}</td>
       </tr>
     `).join("");
 
@@ -273,8 +323,7 @@
   }
 
   async function loadCustomers() {
-    const { data, error } = await db
-      .from("customers")
+    const { data, error } = await db.from("customers")
       .select("id, name, email, phone, authorized_name, payment_term, delivery_address, delivery_method")
       .eq("active", true)
       .order("name");
@@ -285,17 +334,15 @@
     }
 
     customers = data || [];
-
     const select = $("customer-select");
+
     select.innerHTML = '<option value="">Alıcı seçin</option>' +
-      customers.map(customer =>
-        `<option value="${customer.id}">${escapeHtml(customer.name)}</option>`
+      customers.map(c =>
+        `<option value="${c.id}">${escapeHtml(c.name)}</option>`
       ).join("");
 
     select.onchange = () => {
-      const customer = customers.find(
-        item => String(item.id) === select.value
-      );
+      const customer = customers.find(c => String(c.id) === select.value);
 
       $("customer-info").textContent = customer
         ? `Yetkili: ${customer.authorized_name || "—"} | E-posta: ${customer.email}`
@@ -310,17 +357,14 @@
   async function openApp(user) {
     currentUser = user;
 
-    const { data, error } = await db
-      .from("profiles")
+    const { data, error } = await db.from("profiles")
       .select("username, full_name, role, active")
-      .eq("id", user.id)
-      .single();
+      .eq("id", user.id).single();
 
     if (error) throw error;
     if (!data.active) throw new Error("Bu kullanıcı hesabı devre dışı.");
 
     currentProfile = data;
-
     $("login-screen").classList.add("hidden");
     $("app-screen").classList.remove("hidden");
     $("user-info").textContent = data.full_name || data.username;
@@ -335,11 +379,7 @@
     $("products-page").classList.toggle("hidden", data.role !== "admin");
 
     await loadProducts();
-
-    if (data.role === "seller") {
-      await loadCustomers();
-    }
-
+    if (data.role === "seller") await loadCustomers();
     await loadOrders();
   }
 
@@ -376,10 +416,8 @@
 
   function normHeader(value) {
     return String(value ?? "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/[^a-z0-9]/g, "");
   }
 
   function findColumn(row, aliases) {
@@ -390,160 +428,100 @@
   }
 
   function parseNumber(value) {
-    if (value === null || value === undefined || String(value).trim() === "") {
-      return null;
+    if (value === null || value === undefined || String(value).trim() === "") return null;
+
+    let s = String(value).trim().replace(/\s/g, "");
+    if (s.includes(",") && s.includes(".")) {
+      if (s.lastIndexOf(",") > s.lastIndexOf(".")) s = s.replace(/\./g, "").replace(",", ".");
+      else s = s.replace(/,/g, "");
+    } else if (s.includes(",")) {
+      s = s.replace(",", ".");
     }
 
-    let text = String(value).trim().replace(/\s/g, "");
-
-    if (text.includes(",") && text.includes(".")) {
-      if (text.lastIndexOf(",") > text.lastIndexOf(".")) {
-        text = text.replace(/\./g, "").replace(",", ".");
-      } else {
-        text = text.replace(/,/g, "");
-      }
-    } else if (text.includes(",")) {
-      text = text.replace(",", ".");
-    }
-
-    const number = Number(text);
-    return Number.isFinite(number) ? number : null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
   }
 
-  function productKey(product) {
+  function productKey(p) {
     return [
-      product.product_code,
-      product.description,
-      product.barcode || "",
-      product.pack_inner ?? "",
-      product.carton_inner ?? "",
-      product.pallet_inner ?? "",
-      Number(product.price || 0).toFixed(2)
+      p.product_code, p.description, p.barcode || "",
+      p.pack_inner ?? "", p.carton_inner ?? "", p.pallet_inner ?? "",
+      Number(p.price || 0).toFixed(2)
     ].join("|").toLowerCase();
   }
 
   $("import-button").addEventListener("click", async () => {
     const file = $("excel-file").files[0];
-
-    if (!file) {
-      message("Önce Excel veya CSV dosyası seçin.", true);
-      return;
-    }
+    if (!file) return message("Önce Excel veya CSV dosyası seçin.", true);
 
     try {
       message("Dosya okunuyor…");
-
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       let rows = null;
 
       for (const sheetName of workbook.SheetNames) {
-        const matrix = XLSX.utils.sheet_to_json(
-          workbook.Sheets[sheetName],
-          { header: 1, defval: "", raw: false }
-        );
+        const matrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
+          header: 1, defval: "", raw: false
+        });
 
         const headerIndex = matrix.findIndex(row => {
           const headers = row.map(normHeader);
-
-          const hasCode = headers.some(header =>
-            header === "kod" ||
-            header.includes("urunkod") ||
-            header === "stokkodu" ||
-            header.includes("productcode")
+          const hasCode = headers.some(h =>
+            h === "kod" || h.includes("urunkod") || h === "stokkodu" || h.includes("productcode")
           );
-
-          const hasDescription = headers.some(header =>
-            header.includes("aciklama") ||
-            header === "urunadi" ||
-            header === "urunismi" ||
-            header === "description" ||
-            header === "productname"
+          const hasDescription = headers.some(h =>
+            h.includes("aciklama") || h === "urunadi" || h === "urunismi" ||
+            h === "description" || h === "productname"
           );
-
           return hasCode && hasDescription;
         });
 
         if (headerIndex >= 0) {
-          const headers = matrix[headerIndex].map(value =>
-            String(value ?? "").trim()
-          );
-
-          rows = matrix
-            .slice(headerIndex + 1)
-            .filter(row => row.some(value => String(value ?? "").trim() !== ""))
-            .map(row =>
-              Object.fromEntries(
-                headers.map((header, index) => [header, row[index] ?? ""])
-              )
-            );
-
+          const headers = matrix[headerIndex].map(v => String(v ?? "").trim());
+          rows = matrix.slice(headerIndex + 1)
+            .filter(row => row.some(v => String(v ?? "").trim() !== ""))
+            .map(row => Object.fromEntries(
+              headers.map((header, index) => [header, row[index] ?? ""])
+            ));
           break;
         }
       }
 
-      if (!rows) {
-        throw new Error("Kod ve ürün açıklaması başlıkları bulunamadı.");
-      }
+      if (!rows) throw new Error("Kod ve ürün açıklaması başlıkları bulunamadı.");
 
       const parsed = rows.map(row => ({
-        product_code: String(findColumn(row, [
-          "kod", "urunkodu", "stokkodu", "productcode"
-        ])).trim(),
-
-        description: String(findColumn(row, [
-          "aciklama", "urunaciklamasi", "urunadi", "urunismi",
-          "description", "productname"
-        ])).trim(),
-
+        product_code: String(findColumn(row, ["kod", "urunkodu", "stokkodu", "productcode"])).trim(),
+        description: String(findColumn(row, ["aciklama", "urunaciklamasi", "urunadi", "urunismi", "description", "productname"])).trim(),
         barcode: String(findColumn(row, ["barkod", "barcode"])).trim() || null,
-
-        pack_inner: parseNumber(findColumn(row, [
-          "paketici", "paketicinde", "packinner"
-        ])),
-
-        carton_inner: parseNumber(findColumn(row, [
-          "koliici", "koliicinde", "cartoninner"
-        ])),
-
-        pallet_inner: parseNumber(findColumn(row, [
-          "paletici", "paleticinde", "palletinner"
-        ])),
-
+        pack_inner: parseNumber(findColumn(row, ["paketici", "paketicinde", "packinner"])),
+        carton_inner: parseNumber(findColumn(row, ["koliici", "koliicinde", "cartoninner"])),
+        pallet_inner: parseNumber(findColumn(row, ["paletici", "paleticinde", "palletinner"])),
         price: parseNumber(findColumn(row, ["fiyat", "price"])) ?? 0,
         active: true
-      })).filter(product => product.product_code && product.description);
+      })).filter(p => p.product_code && p.description);
 
-      if (!parsed.length) {
-        throw new Error("Başlık bulundu ancak ürün satırı okunamadı.");
-      }
+      if (!parsed.length) throw new Error("Başlık bulundu ancak ürün satırı okunamadı.");
 
-      const existingKeys = new Set(products.map(productKey));
-      const newProducts = [];
+      const existing = new Set(products.map(productKey));
+      const added = [];
 
-      for (const product of parsed) {
-        const key = productKey(product);
-
-        if (!existingKeys.has(key)) {
-          newProducts.push(product);
-          existingKeys.add(key);
+      for (const p of parsed) {
+        const key = productKey(p);
+        if (!existing.has(key)) {
+          added.push(p);
+          existing.add(key);
         }
       }
 
-      if (!newProducts.length) {
-        message("Yeni ürün yok; aynı kayıtlar daha önce aktarılmış olabilir.");
-        return;
-      }
+      if (!added.length) return message("Yeni ürün yok; aynı kayıtlar önceden aktarılmış olabilir.");
 
-      for (let index = 0; index < newProducts.length; index += 100) {
-        const { error } = await db
-          .from("products")
-          .insert(newProducts.slice(index, index + 100));
-
+      for (let i = 0; i < added.length; i += 100) {
+        const { error } = await db.from("products").insert(added.slice(i, i + 100));
         if (error) throw error;
       }
 
       await loadProducts();
-      message(`${newProducts.length} ürün aktarıldı.`);
+      message(`${added.length} ürün aktarıldı.`);
     } catch (error) {
       message("Aktarım başarısız: " + error.message, true);
     }
@@ -552,18 +530,11 @@
   function refreshProductSelects() {
     document.querySelectorAll(".product-select").forEach(select => {
       const oldValue = select.value;
-
       select.innerHTML = '<option value="">Ürün seçin</option>' +
-        products
-          .filter(product => product.active)
-          .map(product => {
-            const label =
-              `${product.product_code} — ${product.description} (Koli: ${product.carton_inner ?? "—"})`;
-
-            return `<option value="${product.id}">${escapeHtml(label)}</option>`;
-          })
-          .join("");
-
+        products.filter(p => p.active).map(p => {
+          const label = `${p.product_code} — ${p.description} (Koli: ${p.carton_inner ?? "—"})`;
+          return `<option value="${p.id}">${escapeHtml(label)}</option>`;
+        }).join("");
       select.value = oldValue;
     });
   }
@@ -571,29 +542,17 @@
   function addOrderLine() {
     const line = document.createElement("div");
     line.className = "line";
-
     line.innerHTML = `
-      <select class="product-select">
-        <option value="">Ürün seçin</option>
-      </select>
-
+      <select class="product-select"><option value="">Ürün seçin</option></select>
       <input class="quantity" type="number" min="1" value="1" aria-label="Adet">
-
       <div class="line-discounts">
-        ${[1, 2, 3, 4, 5].map(index => `
-          <label>
-            İSK${index} %
-            <input class="line-discount"
-                   data-isk="${index}"
-                   type="number"
-                   min="0"
-                   max="100"
-                   step="0.01"
-                   value="0">
+        ${[1, 2, 3, 4, 5].map(i => `
+          <label>İSK${i} %
+            <input class="line-discount" data-isk="${i}" type="number"
+              min="0" max="100" step="0.01" value="0">
           </label>
         `).join("")}
       </div>
-
       <span class="line-total">Net: ${money(0)}</span>
       <button type="button" class="danger remove-line">Sil</button>
     `;
@@ -601,16 +560,11 @@
     $("order-lines").appendChild(line);
     refreshProductSelects();
 
-    line.querySelector(".product-select")
-      .addEventListener("change", calculateTotal);
-
-    line.querySelector(".quantity")
-      .addEventListener("input", calculateTotal);
-
-    line.querySelectorAll(".line-discount").forEach(input => {
-      input.addEventListener("input", calculateTotal);
-    });
-
+    line.querySelector(".product-select").addEventListener("change", calculateTotal);
+    line.querySelector(".quantity").addEventListener("input", calculateTotal);
+    line.querySelectorAll(".line-discount").forEach(input =>
+      input.addEventListener("input", calculateTotal)
+    );
     line.querySelector(".remove-line").addEventListener("click", () => {
       line.remove();
       calculateTotal();
@@ -625,28 +579,19 @@
 
     document.querySelectorAll("#order-lines .line").forEach(line => {
       const product = products.find(
-        item => String(item.id) === line.querySelector(".product-select").value
+        p => String(p.id) === line.querySelector(".product-select").value
       );
-
       const quantity = Number(line.querySelector(".quantity").value || 0);
       const gross = product ? Number(product.price) * quantity : 0;
-
       let net = gross;
 
-      for (let index = 1; index <= 5; index++) {
-        const input = line.querySelector(`[data-isk="${index}"]`);
-        const rate = Number(input?.value || 0);
-
-        if (rate < 0 || rate > 100) {
-          net = 0;
-          break;
-        }
-
+      for (let i = 1; i <= 5; i++) {
+        const rate = Number(line.querySelector(`[data-isk="${i}"]`)?.value || 0);
+        if (rate < 0 || rate > 100) { net = 0; break; }
         net *= (100 - rate) / 100;
       }
 
       net = Math.round((net + Number.EPSILON) * 100) / 100;
-
       line.querySelector(".line-total").textContent = "Net: " + money(net);
       subtotal += gross;
       netTotal += net;
@@ -670,76 +615,51 @@
       return;
     }
 
-    const customer = customers.find(
-      item => String(item.id) === $("customer-select").value
-    );
-
-    if (!customer) {
-      message("Lütfen kayıtlı alıcı listesinden seçim yapın.", true);
-      return;
-    }
+    const customer = customers.find(c => String(c.id) === $("customer-select").value);
+    if (!customer) return message("Lütfen kayıtlı alıcı listesinden seçim yapın.", true);
 
     const lines = [...document.querySelectorAll("#order-lines .line")]
       .map(line => {
         const product = products.find(
-          item => String(item.id) === line.querySelector(".product-select").value
+          p => String(p.id) === line.querySelector(".product-select").value
         );
-
         const quantity = Number(line.querySelector(".quantity").value);
-
-        const discounts = [1, 2, 3, 4, 5].map(index =>
-          Number(line.querySelector(`[data-isk="${index}"]`).value || 0)
+        const discounts = [1, 2, 3, 4, 5].map(i =>
+          Number(line.querySelector(`[data-isk="${i}"]`).value || 0)
         );
-
-        return product && quantity > 0
-          ? { product, quantity, discounts }
-          : null;
+        return product && quantity > 0 ? { product, quantity, discounts } : null;
       })
-      .filter(item => item !== null);
+      .filter(Boolean);
 
-    if (!lines.length) {
-      message("Siparişe en az bir ürün ekleyin.", true);
-      return;
-    }
-
+    if (!lines.length) return message("Siparişe en az bir ürün ekleyin.", true);
     if (lines.some(item => item.discounts.some(rate => rate < 0 || rate > 100))) {
-      message("Her ürünün iskonto oranı 0 ile 100 arasında olmalıdır.", true);
-      return;
+      return message("Her ürünün iskonto oranı 0 ile 100 arasında olmalıdır.", true);
     }
 
     message("Sipariş kaydediliyor…");
 
-    const randomPart = globalThis.crypto?.randomUUID
+    const suffix = globalThis.crypto?.randomUUID
       ? globalThis.crypto.randomUUID().slice(0, 6)
       : Math.random().toString(36).slice(2, 8);
 
-    const orderNumber =
-      "KBR-" +
+    const orderNumber = "KBR-" +
       new Date().toISOString().slice(0, 10).replace(/-/g, "") +
-      "-" +
-      randomPart.toUpperCase();
+      "-" + suffix.toUpperCase();
 
-    const { data: order, error: orderError } = await db
-      .from("orders")
-      .insert({
-        order_number: orderNumber,
-        seller_id: currentUser.id,
-        customer_id: customer.id,
-        customer_name: customer.name,
-        customer_email: customer.email,
-        payment_term: $("payment-term").value.trim() || null,
-        payment_method: $("payment-method").value.trim() || null,
-        delivery_address: $("delivery-address").value.trim() || null,
-        delivery_method: $("delivery-method").value.trim() || null,
-        status: "draft"
-      })
-      .select()
-      .single();
+    const { data: order, error: orderError } = await db.from("orders").insert({
+      order_number: orderNumber,
+      seller_id: currentUser.id,
+      customer_id: customer.id,
+      customer_name: customer.name,
+      customer_email: customer.email,
+      payment_term: $("payment-term").value.trim() || null,
+      payment_method: $("payment-method").value.trim() || null,
+      delivery_address: $("delivery-address").value.trim() || null,
+      delivery_method: $("delivery-method").value.trim() || null,
+      status: "draft"
+    }).select().single();
 
-    if (orderError) {
-      message("Sipariş oluşturulamadı: " + orderError.message, true);
-      return;
-    }
+    if (orderError) return message("Sipariş oluşturulamadı: " + orderError.message, true);
 
     const orderItems = lines.map(({ product, quantity, discounts }) => ({
       order_id: order.id,
@@ -757,39 +677,22 @@
       isk5: discounts[4]
     }));
 
-    const { error: itemsError } = await db
-      .from("order_items")
-      .insert(orderItems);
+    const { error: itemsError } = await db.from("order_items").insert(orderItems);
+    if (itemsError) return message("Ürün satırları eklenemedi: " + itemsError.message, true);
 
-    if (itemsError) {
-      message(
-        "Sipariş taslağı oluştu fakat ürünler eklenemedi: " + itemsError.message,
-        true
-      );
-      return;
-    }
-
-    const { error: submitError } = await db.rpc("submit_order", {
-      p_order_id: order.id
-    });
-
-    if (submitError) {
-      message("Sipariş taslakta kaldı; gönderilemedi: " + submitError.message, true);
-      return;
-    }
+    const { error: submitError } = await db.rpc("submit_order", { p_order_id: order.id });
+    if (submitError) return message("Sipariş gönderilemedi: " + submitError.message, true);
 
     const { error: emailError } = await db.functions.invoke("send-order-email", {
       body: { order_id: order.id }
     });
 
     let emailDetail = emailError?.message || "";
-
     if (emailError?.context) {
       try {
         const response = emailError.context.clone
           ? emailError.context.clone()
           : emailError.context;
-
         const body = await response.json();
         emailDetail = body.error || body.message || emailDetail;
       } catch (_) {}
@@ -812,8 +715,7 @@
   async function loadOrders() {
     if (!currentProfile) return;
 
-    const { data, error } = await db
-      .from("orders")
+    const { data, error } = await db.from("orders")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -839,37 +741,29 @@
         </td>
         <td>${new Date(order.created_at).toLocaleDateString("tr-TR")}</td>
         <td>
-          <button type="button" class="secondary show-details"
-                  data-id="${escapeHtml(order.id)}">Görüntüle</button>
+          <button type="button" class="secondary show-details" data-id="${escapeHtml(order.id)}">Görüntüle</button>
           ${currentProfile.role === "admin"
-            ? `<button type="button" class="danger delete-order"
-                       data-id="${escapeHtml(order.id)}">Sil</button>`
+            ? `<button type="button" class="danger delete-order" data-id="${escapeHtml(order.id)}">Sil</button>`
             : ""}
         </td>
       </tr>
     `).join("");
 
-    document.querySelectorAll(".show-details").forEach(button => {
-      button.addEventListener("click", () =>
-        showOrderDetails(button.dataset.id)
-      );
-    });
+    document.querySelectorAll(".show-details").forEach(button =>
+      button.addEventListener("click", () => showOrderDetails(button.dataset.id))
+    );
 
     document.querySelectorAll(".save-status").forEach(button => {
       button.addEventListener("click", async () => {
-        const id = button.dataset.id;
         const select = document.querySelector(
-          `.status-select[data-id="${id}"]`
+          `.status-select[data-id="${button.dataset.id}"]`
         );
-
-        const { error } = await db
-          .from("orders")
+        const { error } = await db.from("orders")
           .update({ status: select.value })
-          .eq("id", id);
+          .eq("id", button.dataset.id);
 
-        if (error) {
-          message("Durum güncellenemedi: " + error.message, true);
-        } else {
+        if (error) message("Durum güncellenemedi: " + error.message, true);
+        else {
           message("Sipariş durumu güncellendi.");
           await loadOrders();
         }
@@ -879,15 +773,9 @@
     document.querySelectorAll(".delete-order").forEach(button => {
       button.addEventListener("click", async () => {
         if (currentProfile?.role !== "admin") return;
+        if (!confirm("Bu sipariş ve ürün satırları kalıcı olarak silinsin mi?")) return;
 
-        const approved = confirm(
-          "Bu sipariş ve ürün satırları kalıcı olarak silinecek. Devam edilsin mi?"
-        );
-
-        if (!approved) return;
-
-        const { error } = await db
-          .from("orders")
+        const { error } = await db.from("orders")
           .delete()
           .eq("id", button.dataset.id);
 
@@ -929,22 +817,16 @@
   });
 
   async function showOrderDetails(orderId) {
-    const { data: order, error: orderError } = await db
-      .from("orders")
-      .select("*")
-      .eq("id", orderId)
-      .single();
+    const { data: order, error: orderError } = await db.from("orders")
+      .select("*").eq("id", orderId).single();
 
     if (orderError) {
       message("Sipariş alınamadı: " + orderError.message, true);
       return;
     }
 
-    const { data: items, error: itemsError } = await db
-      .from("order_items")
-      .select("*")
-      .eq("order_id", orderId)
-      .order("id");
+    const { data: items, error: itemsError } = await db.from("order_items")
+      .select("*").eq("order_id", orderId).order("id");
 
     if (itemsError) {
       message("Sipariş kalemleri alınamadı: " + itemsError.message, true);
@@ -963,9 +845,8 @@
         <table>
           <thead>
             <tr>
-              <th>Kod</th><th>Ürün</th><th>Adet</th>
-              <th>Ara tutar</th><th>Ürün iskontoları</th>
-              <th>İskonto</th><th>Net tutar</th>
+              <th>Kod</th><th>Ürün</th><th>Adet</th><th>Ara tutar</th>
+              <th>İskontolar</th><th>İskonto</th><th>Net tutar</th>
             </tr>
           </thead>
           <tbody>
@@ -993,15 +874,13 @@
       <p>Ara toplam: ${money(order.subtotal)}</p>
       <p>Toplam iskonto: ${money(order.discount_amount)}</p>
       <p><strong>Net toplam: ${money(order.total_amount)}</strong></p>
+      <p><strong>Fiyatlarımıza KDV dahil değildir.</strong></p>
     `;
 
     $("detail-dialog").showModal();
   }
 
-  $("close-dialog").addEventListener("click", () => {
-    $("detail-dialog").close();
-  });
-
+  $("close-dialog").addEventListener("click", () => $("detail-dialog").close());
   $("refresh-orders").addEventListener("click", loadOrders);
 
   db.auth.getSession().then(async ({ data }) => {
