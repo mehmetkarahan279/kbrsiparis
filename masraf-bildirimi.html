@@ -26,7 +26,7 @@
       border-radius: 10px;
     }
 
-    h1, h2, h3 { color: #173b2e; }
+    h1, h2 { color: #173b2e; }
 
     label {
       display: block;
@@ -94,22 +94,9 @@
       font-weight: 700;
     }
 
-    #message {
-      margin: 12px 0;
-      white-space: pre-wrap;
-    }
-
-    .note {
-      color: #64748b;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .top-link {
-      color: #17633d;
-      text-decoration: none;
-    }
-
+    #message { margin: 12px 0; white-space: pre-wrap; }
+    .note { color: #64748b; font-size: 12px; line-height: 1.5; }
+    .top-link { color: #17633d; text-decoration: none; }
     .hidden { display: none !important; }
 
     .totals {
@@ -133,10 +120,7 @@
       font-size: 12px;
     }
 
-    .total-card strong {
-      color: #173b2e;
-      font-size: 18px;
-    }
+    .total-card strong { color: #173b2e; font-size: 18px; }
 
     .status {
       display: inline-block;
@@ -174,11 +158,7 @@
       background: #fff;
     }
 
-    .signature-box strong,
-    .signature-box span {
-      display: block;
-    }
-
+    .signature-box strong, .signature-box span { display: block; }
     .signature-box span { margin-top: 22px; }
 
     dialog {
@@ -244,7 +224,7 @@
     }
 
     @media print {
-      @page { size: A4 landscape; margin: 12mm; }
+      @page { size: A4 landscape; margin: 10mm; }
 
       body, main {
         margin: 0;
@@ -286,49 +266,62 @@
 
       #expense-report-section th,
       #expense-report-section td {
-        padding: 6px;
+        padding: 3px 4px;
         border: 1px solid #777;
         color: #000;
-        font-size: 9pt;
+        font-size: 7pt;
+        line-height: 1.15;
       }
 
       #expense-report-section th { background: #e9eeeb !important; }
 
-      #expense-report-section .totals { margin: 12px 0; }
+      #expense-report-section .description-cell {
+        min-width: 0;
+        line-height: 1.15;
+      }
+
+      #expense-report-section .status {
+        padding: 2px 4px;
+        font-size: 7pt;
+      }
+
+      #expense-report-section .totals { margin: 9px 0; }
 
       #expense-report-section .total-card {
-        padding: 8px;
+        padding: 6px;
         border: 1px solid #777;
         background: #fff !important;
       }
 
-      #expense-report-section .total-card strong { font-size: 12pt; }
+      #expense-report-section .total-card span { font-size: 7pt; }
+      #expense-report-section .total-card strong { font-size: 9pt; }
 
       .print-only { display: block !important; }
 
       .print-signatures {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 22px;
-        margin-top: 25px;
+        gap: 18px;
+        margin-top: 18px;
         page-break-inside: avoid;
       }
 
       .print-signature-box {
-        min-height: 100px;
-        padding: 12px;
+        min-height: 80px;
+        padding: 8px;
         border: 1px solid #777;
+        font-size: 8pt;
       }
 
       .print-signature-box img {
         display: block;
-        max-width: 180px;
-        max-height: 65px;
-        margin-top: 5px;
+        max-width: 150px;
+        max-height: 50px;
+        margin-top: 4px;
         object-fit: contain;
       }
 
-      .print-signature-entry { margin: 8px 0; }
+      .print-signature-entry { margin: 5px 0; }
     }
   </style>
 </head>
@@ -346,12 +339,10 @@
         <label for="email">E-posta</label>
         <input id="email" type="email" autocomplete="username" required>
       </div>
-
       <div class="field">
         <label for="password">Şifre</label>
         <input id="password" type="password" autocomplete="current-password" required>
       </div>
-
       <button type="submit">Giriş yap</button>
     </form>
   </section>
@@ -393,15 +384,9 @@
 
           <div class="field hidden" id="card-last4-field">
             <label for="card-last4">Şirket kartının son 4 hanesi</label>
-            <input
-              id="card-last4"
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]{4}"
-              maxlength="4"
-              autocomplete="off"
-              placeholder="Örnek: 1234"
-            >
+            <input id="card-last4" type="text" inputmode="numeric"
+                   pattern="[0-9]{4}" maxlength="4" autocomplete="off"
+                   placeholder="Örnek: 1234">
           </div>
 
           <div class="field">
@@ -431,7 +416,7 @@
         <div class="signature-summary">
           <div class="signature-box">
             <strong>Formu dolduran</strong>
-            <span id="form-submitter-footer">Satıcı adı girişte doldurulur.</span>
+            <span id="form-submitter-footer">Satıcı adı girişte gösterilir.</span>
           </div>
           <div class="signature-box">
             <strong>Formu onaylayan</strong>
@@ -447,6 +432,7 @@
       <div class="print-only">
         <h1>KBR Piknik Ürünleri — Masraf Raporu</h1>
         <p>Dönem: <strong id="print-period"></strong></p>
+        <p>Ödeme türü: <strong id="print-payment"></strong></p>
         <p>Rapor tarihi: <strong id="print-date"></strong></p>
       </div>
 
@@ -457,6 +443,16 @@
           <label for="filter-month">Ay filtresi</label>
           <input id="filter-month" type="month">
         </div>
+
+        <div class="field">
+          <label for="filter-payment">Ödeme türü</label>
+          <select id="filter-payment">
+            <option value="">Tümü</option>
+            <option value="Kredi kartı">Kredi kartı</option>
+            <option value="Nakit">Nakit</option>
+          </select>
+        </div>
+
         <button type="button" id="refresh" class="secondary">Listeyi yenile</button>
         <button type="button" id="pdf-report" class="secondary">Raporu PDF al</button>
       </div>
@@ -534,7 +530,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+  const SUPABASE_PUBLISHABLE_KEY = "BURAYA_PUBLISHABLE_KEY";
 
   const db = window.supabase.createClient(
     SUPABASE_URL,
@@ -584,6 +580,13 @@
     return ["Onay bekliyor", "status-pending"];
   }
 
+  function paymentLabel(expense) {
+    if (expense.payment_type === "Kredi kartı") {
+      return `Kredi kartı${expense.card_last4 ? ` · Son 4: ${esc(expense.card_last4)}` : ""}`;
+    }
+    return "Nakit";
+  }
+
   function updateFormTotal() {
     const amount = Number($("amount").value || 0);
     const vat = Number($("vat-amount").value || 0);
@@ -594,7 +597,6 @@
     const isCard = $("payment-type").value === "Kredi kartı";
     $("card-last4-field").classList.toggle("hidden", !isCard);
     $("card-last4").required = isCard;
-
     if (!isCard) $("card-last4").value = "";
   }
 
@@ -619,7 +621,6 @@
     $("app").classList.remove("hidden");
     $("user-label").textContent =
       `${displayName} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
-
     $("filter-month").value = localMonth();
 
     if (data.role === "seller") {
@@ -657,6 +658,11 @@
         .lt("expense_date", nextMonth);
     }
 
+    const paymentType = $("filter-payment").value;
+    if (paymentType) {
+      query = query.eq("payment_type", paymentType);
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -684,10 +690,6 @@
           vatSum += vat;
           totalSum += total;
 
-          const paymentInfo = expense.payment_type === "Kredi kartı"
-            ? `Kredi kartı${expense.card_last4 ? ` · Son 4: ${esc(expense.card_last4)}` : ""}`
-            : "Nakit";
-
           const actionButton =
             profile.role === "admin" && expense.status === "pending"
               ? `<button type="button" class="review-expense" data-id="${esc(expense.id)}">İncele / Onayla</button>`
@@ -702,21 +704,22 @@
               <td>${money(vat)}</td>
               <td class="description-cell">
                 <strong>${esc(expense.description)}</strong>
-                <div>${esc(expense.detail || "")}</div>
-                <div><strong>Ödeme:</strong> ${paymentInfo}</div>
+                <div><strong>Ödeme:</strong> ${paymentLabel(expense)}</div>
+                ${expense.detail ? `<div>${esc(expense.detail)}</div>` : ""}
                 <span class="status ${statusClass}">${statusText}</span>
                 <div>${actionButton}</div>
               </td>
             </tr>
           `;
         }).join("")
-      : `<tr><td colspan="6">Seçilen ay için masraf kaydı bulunamadı.</td></tr>`;
+      : `<tr><td colspan="6">Seçilen filtrelerde masraf kaydı bulunamadı.</td></tr>`;
 
     $("sum-amount").textContent = money(amountSum);
     $("sum-vat").textContent = money(vatSum);
     $("sum-total").textContent = money(totalSum);
 
     $("print-period").textContent = $("filter-month").value || "Tüm dönem";
+    $("print-payment").textContent = $("filter-payment").value || "Tümü";
     $("print-date").textContent = localDate();
 
     renderPrintSignatures();
@@ -749,21 +752,15 @@
         <p>${esc(submitters.join(", ") || "—")}</p>
         <p>İmza: ______________________________</p>
       </div>
-
       <div class="print-signature-box">
         <strong>Formu onaylayan</strong>
         <p>${esc(approvers.join(", ") || "Henüz onaylanmadı")}</p>
-        ${approvedExpenses
-          .filter(expense => expense.approver_signature)
-          .map(expense => `
-            <div class="print-signature-entry">
-              <small>
-                ${esc(expense.approver_name || "")} —
-                ${esc(expense.expense_date)}
-              </small>
-              <img src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">
-            </div>
-          `).join("")}
+        ${approvedExpenses.filter(expense => expense.approver_signature).map(expense => `
+          <div class="print-signature-entry">
+            <small>${esc(expense.approver_name || "")} — ${esc(expense.expense_date)}</small>
+            <img src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">
+          </div>
+        `).join("")}
       </div>
     `;
   }
@@ -773,10 +770,6 @@
     if (!expense) return;
 
     const [statusText] = getStatus(expense.status);
-    const paymentInfo = expense.payment_type === "Kredi kartı"
-      ? `Kredi kartı${expense.card_last4 ? ` — son 4 hane: ${esc(expense.card_last4)}` : ""}`
-      : "Nakit";
-
     const signature = expense.approver_signature
       ? `<img class="signature-image" src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">`
       : "—";
@@ -788,7 +781,7 @@
         <div class="detail-item"><strong>Formu dolduran:</strong> ${esc(expense.submitter_name)}</div>
         <div class="detail-item"><strong>Durum:</strong> ${esc(statusText)}</div>
         <div class="detail-item"><strong>Açıklama:</strong> ${esc(expense.description)}</div>
-        <div class="detail-item"><strong>Ödeme türü:</strong> ${paymentInfo}</div>
+        <div class="detail-item"><strong>Ödeme türü:</strong> ${paymentLabel(expense)}</div>
         <div class="detail-item"><strong>Tutar (KDV hariç):</strong> ${money(expense.amount)}</div>
         <div class="detail-item"><strong>KDV tutarı:</strong> ${money(expense.vat_amount)}</div>
         <div class="detail-item"><strong>Tutar (KDV dahil):</strong> ${money(Number(expense.amount) + Number(expense.vat_amount))}</div>
@@ -820,26 +813,18 @@
 
   function clearSignature() {
     const canvas = $("signature-canvas");
-    const context = canvas.getContext("2d");
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
     hasSignature = false;
   }
 
   function canvasPoint(event) {
     const rect = $("signature-canvas").getBoundingClientRect();
-    return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    };
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
   }
 
   function openApproval(id) {
     selectedExpense = expenses.find(item => item.id === id);
     if (!selectedExpense) return;
-
-    const paymentInfo = selectedExpense.payment_type === "Kredi kartı"
-      ? `Kredi kartı${selectedExpense.card_last4 ? ` — son 4 hane: ${esc(selectedExpense.card_last4)}` : ""}`
-      : "Nakit";
 
     $("approval-details").innerHTML = `
       <p><strong>Tarih:</strong> ${esc(selectedExpense.expense_date)}</p>
@@ -847,7 +832,7 @@
       <p><strong>Formu dolduran:</strong> ${esc(selectedExpense.submitter_name)}</p>
       <p><strong>Açıklama:</strong> ${esc(selectedExpense.description)}</p>
       <p><strong>Masraf detayı:</strong> ${esc(selectedExpense.detail || "—")}</p>
-      <p><strong>Ödeme türü:</strong> ${paymentInfo}</p>
+      <p><strong>Ödeme türü:</strong> ${paymentLabel(selectedExpense)}</p>
       <p><strong>Tutar (KDV dahil):</strong>
         ${money(Number(selectedExpense.amount) + Number(selectedExpense.vat_amount))}
       </p>
@@ -865,13 +850,8 @@
     });
   }
 
-  function finishDrawing() {
-    isDrawing = false;
-  }
-
   $("signature-canvas").addEventListener("pointerdown", event => {
     event.preventDefault();
-
     const canvas = $("signature-canvas");
     const context = canvas.getContext("2d");
     const point = canvasPoint(event);
@@ -892,6 +872,8 @@
     context.lineTo(point.x, point.y);
     context.stroke();
   });
+
+  function finishDrawing() { isDrawing = false; }
 
   $("signature-canvas").addEventListener("pointerup", finishDrawing);
   $("signature-canvas").addEventListener("pointercancel", finishDrawing);
@@ -960,7 +942,7 @@
       return;
     }
 
-    if (paymentType === "Kredi kartı" && !/^\d{4}$/.test(last4)) {
+    if (paymentType === "Kredi kartı" && !/^[0-9]{4}$/.test(last4)) {
       tell("Kredi kartı seçildiğinde kartın son 4 hanesini girin.", true);
       return;
     }
@@ -1030,6 +1012,7 @@
 
   $("refresh").addEventListener("click", loadExpenses);
   $("filter-month").addEventListener("change", loadExpenses);
+  $("filter-payment").addEventListener("change", loadExpenses);
 
   $("pdf-report").addEventListener("click", () => {
     if (!expenses.length) {
@@ -1041,14 +1024,8 @@
 
   $("approve-expense").addEventListener("click", () => decideExpense("approved"));
   $("reject-expense").addEventListener("click", () => decideExpense("rejected"));
-
-  $("close-approval").addEventListener("click", () => {
-    $("approval-dialog").close();
-  });
-
-  $("close-detail").addEventListener("click", () => {
-    $("detail-dialog").close();
-  });
+  $("close-approval").addEventListener("click", () => $("approval-dialog").close());
+  $("close-detail").addEventListener("click", () => $("detail-dialog").close());
 
   $("logout").addEventListener("click", async () => {
     await db.auth.signOut();
