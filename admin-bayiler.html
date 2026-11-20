@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBR | Bayi Yönetimi</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; padding:24px; font:15px Arial,sans-serif; color:#1f2937; background:#f4f7f5; }
+    main { max-width:1100px; margin:auto; }
+    section { background:#fff; padding:20px; margin:16px 0; border:1px solid #e2e8f0; border-radius:10px; }
+    h1,h2 { color:#173b2e; }
+    label { display:block; margin:10px 0 5px; font-weight:600; }
+    input,select,textarea,button { width:100%; padding:10px; font:inherit; border:1px solid #cbd5e1; border-radius:6px; }
+    textarea { min-height:70px; }
+    button { width:auto; cursor:pointer; background:#17633d; color:white; border:0; }
+    button.secondary { background:#475569; }
+    button.danger { background:#a83232; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+    .scroll { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:760px; }
+    th,td { padding:10px; text-align:left; vertical-align:top; border-bottom:1px solid #e2e8f0; }
+    .actions { display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+    .actions select { min-width:170px; }
+    #message { white-space:pre-wrap; margin:12px 0; }
+    .hidden { display:none !important; }
+    @media(max-width:650px) {
+      body { padding:12px; }
+      .form-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <h1>KBR Bayi Yönetimi</h1>
+  <div id="message" role="status"></div>
+
+  <section id="login-section">
+    <h2>Admin girişi</h2>
+    <form id="login-form">
+      <label for="login-email">E-posta</label>
+      <input id="login-email" type="email" autocomplete="username" required>
+      <label for="login-password">Şifre</label>
+      <input id="login-password" type="password" autocomplete="current-password" required>
+      <p><button type="submit">Giriş yap</button></p>
+    </form>
+  </section>
+
+  <div id="admin-panel" class="hidden">
+    <p>
+      <span id="admin-name"></span>
+      <button type="button" id="logout-button" class="secondary">Çıkış yap</button>
+    </p>
+
+    <section>
+      <h2>Yeni bayi ekle</h2>
+      <form id="dealer-form">
+        <div class="form-grid">
+          <div>
+            <label for="dealer-code">Bayi kodu (isteğe bağlı)</label>
+            <input id="dealer-code">
+          </div>
+          <div>
+            <label for="dealer-name">Bayi / firma adı</label>
+            <input id="dealer-name" required>
+          </div>
+          <div>
+            <label for="contact-name">Yetkili adı</label>
+            <input id="contact-name">
+          </div>
+          <div>
+            <label for="dealer-email">E-posta</label>
+            <input id="dealer-email" type="email">
+          </div>
+          <div>
+            <label for="dealer-phone">Telefon</label>
+            <input id="dealer-phone">
+          </div>
+          <div>
+            <label for="dealer-address">Adres</label>
+            <textarea id="dealer-address"></textarea>
+          </div>
+        </div>
+        <button type="submit">Bayiyi kaydet</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>Bayiler ve satıcı atamaları</h2>
+      <button type="button" id="refresh-button" class="secondary">Listeyi yenile</button>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Bayi kodu</th>
+              <th>Bayi</th>
+              <th>Yetkili / iletişim</th>
+              <th>Atanmış satıcılar</th>
+              <th>Satıcı ata</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody id="dealers-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "BURAYA_PUBLISHABLE_KEY";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const $ = id => document.getElementById(id);
+
+  let sellers = [];
+  let dealers = [];
+  let assignments = [];
+
+  function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[ch]));
+  }
+
+  function showMessage(text, error = false) {
+    $("message").textContent = text;
+    $("message").style.color = error ? "#a83232" : "#17633d";
+  }
+
+  async function openAdmin(user) {
+    const { data: profile, error } = await db.from("profiles")
+      .select("username, full_name, role, active")
+      .eq("id", user.id)
+      .single();
+
+    if (error || !profile?.active || profile.role !== "admin") {
+      await db.auth.signOut();
+      $("login-section").classList.remove("hidden");
+      showMessage("Bu sayfayı yalnızca aktif admin kullanabilir.", true);
+      return;
+    }
+
+    $("login-section").classList.add("hidden");
+    $("admin-panel").classList.remove("hidden");
+    $("admin-name").textContent = `Giriş yapan: ${profile.full_name || profile.username}`;
+    await loadData();
+  }
+
+  async function loadData() {
+    const [dealerResult, sellerResult, assignmentResult] = await Promise.all([
+      db.from("dealers").select("*").order("name"),
+      db.from("profiles").select("id, username, full_name")
+        .eq("role", "seller").eq("active", true).order("username"),
+      db.from("seller_dealers").select("seller_id, dealer_id")
+    ]);
+
+    if (dealerResult.error) return showMessage("Bayiler yüklenemedi: " + dealerResult.error.message, true);
+    if (sellerResult.error) return showMessage("Satıcılar yüklenemedi: " + sellerResult.error.message, true);
+    if (assignmentResult.error) return showMessage("Atamalar yüklenemedi: " + assignmentResult.error.message, true);
+
+    dealers = dealerResult.data || [];
+    sellers = sellerResult.data || [];
+    assignments = assignmentResult.data || [];
+    renderDealers();
+  }
+
+  function renderDealers() {
+    $("dealers-body").innerHTML = dealers.map(dealer => {
+      const dealerAssignments = assignments.filter(
+        a => Number(a.dealer_id) === Number(dealer.id)
+      );
+
+      const assignedNames = dealerAssignments.map(a => {
+        const seller = sellers.find(s => s.id === a.seller_id);
+        return seller ? (seller.full_name || seller.username) : "Satıcı";
+      });
+
+      const sellerOptions = sellers.map(seller => `
+        <option value="${esc(seller.id)}">
+          ${esc(seller.full_name || seller.username)}
+        </option>
+      `).join("");
+
+      return `
+        <tr>
+          <td>${esc(dealer.dealer_code || "—")}</td>
+          <td>${esc(dealer.name)}</td>
+          <td>
+            ${esc(dealer.contact_name || "")}<br>
+            ${esc(dealer.email || "")}<br>
+            ${esc(dealer.phone || "")}
+          </td>
+          <td>${assignedNames.length ? assignedNames.map(esc).join(", ") : "Atama yok"}</td>
+          <td>
+            <div class="actions">
+              <select class="seller-select" data-dealer-id="${dealer.id}">
+                <option value="">Satıcı seçin</option>
+                ${sellerOptions}
+              </select>
+              <button type="button" class="assign-button" data-dealer-id="${dealer.id}">
+                Ata
+              </button>
+              ${dealerAssignments.map(a => {
+                const seller = sellers.find(s => s.id === a.seller_id);
+                if (!seller) return "";
+                return `<button type="button" class="danger unassign-button"
+                  data-dealer-id="${dealer.id}" data-seller-id="${esc(seller.id)}">
+                  ${esc(seller.username)} atamasını kaldır
+                </button>`;
+              }).join("")}
+            </div>
+          </td>
+          <td>
+            ${dealer.active ? "Aktif" : "Pasif"}
+            <button type="button" class="toggle-button secondary"
+              data-id="${dealer.id}" data-active="${dealer.active}">
+              ${dealer.active ? "Pasifleştir" : "Aktifleştir"}
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    document.querySelectorAll(".assign-button").forEach(button => {
+      button.addEventListener("click", async () => {
+        const dealerId = Number(button.dataset.dealerId);
+        const select = document.querySelector(
+          `.seller-select[data-dealer-id="${dealerId}"]`
+        );
+        const sellerId = select.value;
+
+        if (!sellerId) return showMessage("Önce satıcı seçin.", true);
+
+        const { error } = await db.from("seller_dealers").upsert({
+          seller_id: sellerId,
+          dealer_id: dealerId
+        });
+
+        if (error) return showMessage("Atama yapılamadı: " + error.message, true);
+        showMessage("Satıcı bayiye atandı.");
+        await loadData();
+      });
+    });
+
+    document.querySelectorAll(".unassign-button").forEach(button => {
+      button.addEventListener("click", async () => {
+        if (!confirm("Bu satıcının bayi ataması kaldırılsın mı?")) return;
+
+        const { error } = await db.from("seller_dealers")
+          .delete()
+          .eq("seller_id", button.dataset.sellerId)
+          .eq("dealer_id", button.dataset.dealerId);
+
+        if (error) return showMessage("Atama kaldırılamadı: " + error.message, true);
+        showMessage("Bayi ataması kaldırıldı.");
+        await loadData();
+      });
+    });
+
+    document.querySelectorAll(".toggle-button").forEach(button => {
+      button.addEventListener("click", async () => {
+        const nextActive = button.dataset.active !== "true";
+        const { error } = await db.from("dealers")
+          .update({ active: nextActive, updated_at: new Date().toISOString() })
+          .eq("id", button.dataset.id);
+
+        if (error) return showMessage("Bayi durumu güncellenemedi: " + error.message, true);
+        showMessage("Bayi durumu güncellendi.");
+        await loadData();
+      });
+    });
+  }
+
+  $("login-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    showMessage("Giriş yapılıyor…");
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("login-email").value,
+      password: $("login-password").value
+    });
+
+    if (error) return showMessage("Giriş başarısız: " + error.message, true);
+    await openAdmin(data.user);
+  });
+
+  $("dealer-form").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const record = {
+      dealer_code: $("dealer-code").value.trim() || null,
+      name: $("dealer-name").value.trim(),
+      contact_name: $("contact-name").value.trim() || null,
+      email: $("dealer-email").value.trim() || null,
+      phone: $("dealer-phone").value.trim() || null,
+      address: $("dealer-address").value.trim() || null
+    };
+
+    const { error } = await db.from("dealers").insert(record);
+    if (error) return showMessage("Bayi kaydedilemedi: " + error.message, true);
+
+    $("dealer-form").reset();
+    showMessage("Bayi kaydedildi.");
+    await loadData();
+  });
+
+  $("refresh-button").addEventListener("click", loadData);
+
+  $("logout-button").addEventListener("click", async () => {
+    await db.auth.signOut();
+    location.reload();
+  });
+
+  db.auth.getSession().then(async ({ data }) => {
+    if (data.session) await openAdmin(data.session.user);
+  });
+</script>
+</body>
+</html>
