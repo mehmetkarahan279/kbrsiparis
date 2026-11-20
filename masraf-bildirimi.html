@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBR | Masraf Bildirimi</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      color: #1f2937;
+      background: #f4f7f5;
+      font: 15px Arial, sans-serif;
+    }
+
+    main { max-width: 1100px; margin: auto; }
+
+    section {
+      margin: 16px 0;
+      padding: 20px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    h1, h2, h3 { color: #173b2e; }
+
+    label {
+      display: block;
+      margin: 8px 0 5px;
+      font-weight: 600;
+    }
+
+    input, textarea, select, button {
+      max-width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    input, textarea, select { width: 100%; }
+
+    button {
+      width: auto;
+      cursor: pointer;
+      color: white;
+      background: #17633d;
+      border: 0;
+    }
+
+    button.secondary { background: #475569; }
+    button.danger { background: #a83232; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+
+    .field { margin: 12px 0; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: end;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .toolbar .field { min-width: 190px; }
+
+    .scroll { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    #message {
+      margin: 12px 0;
+      white-space: pre-wrap;
+    }
+
+    .note {
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .top-link {
+      color: #17633d;
+      text-decoration: none;
+    }
+
+    .hidden { display: none !important; }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .total-card {
+      padding: 15px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .total-card span {
+      display: block;
+      margin-bottom: 7px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .total-card strong {
+      color: #173b2e;
+      font-size: 19px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status-pending { color: #854d0e; background: #fef3c7; }
+    .status-approved { color: #166534; background: #dcfce7; }
+    .status-rejected { color: #991b1b; background: #fee2e2; }
+
+    dialog {
+      width: min(720px, 96vw);
+      max-height: 90vh;
+      overflow: auto;
+      padding: 22px;
+      border: 0;
+      border-radius: 10px;
+    }
+
+    dialog::backdrop { background: #0008; }
+
+    #signature-canvas {
+      display: block;
+      width: 100%;
+      height: 180px;
+      background: white;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      touch-action: none;
+    }
+
+    .dialog-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 650px) {
+      body { padding: 10px; }
+      section { padding: 15px; }
+      .grid, .totals { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <p><a class="top-link" href="./index.html">← Ana sayfa</a></p>
+  <h1>KBR Masraf Bildirimi</h1>
+  <div id="message" role="status"></div>
+
+  <section id="login-section">
+    <h2>Giriş</h2>
+    <form id="login-form">
+      <div class="field">
+        <label for="email">E-posta</label>
+        <input id="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Şifre</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Giriş yap</button>
+    </form>
+  </section>
+
+  <div id="app" class="hidden">
+    <p>
+      <span id="user-label"></span>
+      <button type="button" id="logout" class="secondary">Çıkış yap</button>
+    </p>
+
+    <section id="expense-form-section" class="hidden">
+      <h2>Yeni masraf bildirimi</h2>
+
+      <form id="expense-form">
+        <div class="grid">
+          <div class="field">
+            <label for="expense-date">Masrafın tarihi</label>
+            <input id="expense-date" type="date" required>
+          </div>
+
+          <div class="field">
+            <label for="receipt-number">Masraf fiş no</label>
+            <input id="receipt-number" maxlength="100" placeholder="Fiş numarası">
+          </div>
+
+          <div class="field">
+            <label for="description">Masraf açıklaması</label>
+            <input id="description" maxlength="200" required
+                   placeholder="Örnek: Bayi ziyareti yol masrafı">
+          </div>
+
+          <div class="field">
+            <label for="amount">Tutar (KDV hariç, TL)</label>
+            <input id="amount" type="number" min="0" step="0.01" required>
+          </div>
+
+          <div class="field">
+            <label for="vat-amount">KDV tutarı (TL)</label>
+            <input id="vat-amount" type="number" min="0" step="0.01" value="0" required>
+          </div>
+
+          <div class="field">
+            <label>Formu dolduran</label>
+            <input id="submitter-name" readonly>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="detail">Masraf detayı</label>
+          <textarea id="detail" maxlength="2000" rows="4"
+                    placeholder="Masrafla ilgili ayrıntılar"></textarea>
+        </div>
+
+        <p><strong>Toplam (KDV dahil): <span id="form-total">0,00 TL</span></strong></p>
+        <button type="submit" id="submit-expense">Masrafı kaydet</button>
+      </form>
+    </section>
+
+    <section>
+      <h2 id="list-title">Masraf kayıtları</h2>
+
+      <div class="toolbar">
+        <div class="field">
+          <label for="filter-month">Ay filtresi</label>
+          <input id="filter-month" type="month">
+        </div>
+        <button type="button" id="refresh" class="secondary">Listeyi yenile</button>
+      </div>
+
+      <div class="totals">
+        <div class="total-card">
+          <span>KDV hariç masraf toplamı</span>
+          <strong id="sum-amount">0,00 TL</strong>
+        </div>
+        <div class="total-card">
+          <span>KDV toplamı</span>
+          <strong id="sum-vat">0,00 TL</strong>
+        </div>
+        <div class="total-card">
+          <span>Genel toplam (KDV dahil)</span>
+          <strong id="sum-total">0,00 TL</strong>
+        </div>
+      </div>
+
+      <div class="scroll" style="margin-top:16px">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Satıcı</th>
+              <th>Açıklama</th>
+              <th>Fiş no</th>
+              <th>Tutar</th>
+              <th>KDV</th>
+              <th>Toplam</th>
+              <th>Durum</th>
+              <th>Detay / İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="expenses-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog id="approval-dialog">
+  <h2>Masraf inceleme ve onay</h2>
+  <div id="approval-details"></div>
+
+  <div class="field">
+    <label for="approver-name">Onaylayan adı soyadı</label>
+    <input id="approver-name" readonly>
+  </div>
+
+  <div class="field">
+    <label for="approval-note">Onay / ret notu</label>
+    <textarea id="approval-note" maxlength="1000" rows="3"></textarea>
+  </div>
+
+  <div class="field">
+    <label>Onaylayan imzası (onay için imza çizin)</label>
+    <canvas id="signature-canvas"></canvas>
+    <p class="note">İmza alanına fareyle veya dokunmatik ekranda parmağınızla imza atın.</p>
+    <button type="button" id="clear-signature" class="secondary">İmzayı temizle</button>
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" id="approve-expense">Onayla</button>
+    <button type="button" id="reject-expense" class="danger">Reddet</button>
+    <button type="button" id="close-dialog" class="secondary">Kapat</button>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  const $ = id => document.getElementById(id);
+
+  let currentUser = null;
+  let profile = null;
+  let expenses = [];
+  let selectedExpense = null;
+  let isDrawing = false;
+  let hasSignature = false;
+
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[character]));
+
+  const money = value => Number(value || 0).toLocaleString("tr-TR", {
+    style: "currency",
+    currency: "TRY"
+  });
+
+  function tell(text, error = false) {
+    $("message").textContent = text;
+    $("message").style.color = error ? "#a83232" : "#17633d";
+  }
+
+  function localDate() {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 10);
+  }
+
+  function localMonth() {
+    return localDate().slice(0, 7);
+  }
+
+  function statusLabel(status) {
+    if (status === "approved") return ["Onaylandı", "status-approved"];
+    if (status === "rejected") return ["Reddedildi", "status-rejected"];
+    return ["Onay bekliyor", "status-pending"];
+  }
+
+  function updateFormTotal() {
+    const amount = Number($("amount").value || 0);
+    const vat = Number($("vat-amount").value || 0);
+    $("form-total").textContent = money(amount + vat);
+  }
+
+  async function openApp(user) {
+    currentUser = user;
+
+    const { data, error } = await db.from("profiles")
+      .select("username, full_name, role, active")
+      .eq("id", user.id)
+      .single();
+
+    if (error) throw error;
+    if (!data.active) throw new Error("Kullanıcı hesabı devre dışı.");
+
+    if (!["seller", "admin"].includes(data.role)) {
+      throw new Error("Bu sayfaya erişim yetkiniz yok.");
+    }
+
+    profile = data;
+    const displayName = data.full_name || data.username;
+
+    $("login-section").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("user-label").textContent =
+      `${displayName} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
+
+    $("filter-month").value = localMonth();
+
+    if (data.role === "seller") {
+      $("expense-form-section").classList.remove("hidden");
+      $("submitter-name").value = displayName;
+      $("list-title").textContent = "Masraf kayıtlarım";
+    } else {
+      $("expense-form-section").classList.add("hidden");
+      $("list-title").textContent = "Tüm satıcıların masraf kayıtları";
+    }
+
+    await loadExpenses();
+  }
+
+  async function loadExpenses() {
+    if (!profile) return;
+
+    let query = db.from("expenses")
+      .select("*")
+      .order("expense_date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    const month = $("filter-month").value;
+    if (month) {
+      const [year, monthNumber] = month.split("-").map(Number);
+      const next = new Date(year, monthNumber, 1);
+      const nextMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
+
+      query = query
+        .gte("expense_date", `${month}-01`)
+        .lt("expense_date", nextMonth);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      tell("Masraf kayıtları yüklenemedi: " + error.message, true);
+      return;
+    }
+
+    expenses = data || [];
+    renderExpenses();
+  }
+
+  function renderExpenses() {
+    let amountSum = 0;
+    let vatSum = 0;
+    let totalSum = 0;
+
+    $("expenses-body").innerHTML = expenses.length
+      ? expenses.map(expense => {
+          const amount = Number(expense.amount || 0);
+          const vat = Number(expense.vat_amount || 0);
+          const total = amount + vat;
+          const [label, className] = statusLabel(expense.status);
+
+          amountSum += amount;
+          vatSum += vat;
+          totalSum += total;
+
+          return `
+            <tr>
+              <td>${esc(expense.expense_date)}</td>
+              <td>${esc(expense.submitter_name)}</td>
+              <td>${esc(expense.description)}</td>
+              <td>${esc(expense.receipt_number || "—")}</td>
+              <td>${money(amount)}</td>
+              <td>${money(vat)}</td>
+              <td><strong>${money(total)}</strong></td>
+              <td><span class="status ${className}">${label}</span></td>
+              <td>
+                ${profile.role === "admin" && expense.status === "pending"
+                  ? `<button type="button" class="review-expense" data-id="${esc(expense.id)}">İncele</button>`
+                  : `<button type="button" class="secondary view-expense" data-id="${esc(expense.id)}">Görüntüle</button>`
+                }
+              </td>
+            </tr>
+          `;
+        }).join("")
+      : `<tr><td colspan="9">Seçilen ay için masraf kaydı bulunamadı.</td></tr>`;
+
+    $("sum-amount").textContent = money(amountSum);
+    $("sum-vat").textContent = money(vatSum);
+    $("sum-total").textContent = money(totalSum);
+
+    document.querySelectorAll(".review-expense").forEach(button => {
+      button.addEventListener("click", () => openApproval(button.dataset.id));
+    });
+
+    document.querySelectorAll(".view-expense").forEach(button => {
+      button.addEventListener("click", () => showExpense(button.dataset.id));
+    });
+  }
+
+  function showExpense(id) {
+    const expense = expenses.find(item => item.id === id);
+    if (!expense) return;
+
+    const [label] = statusLabel(expense.status);
+
+    alert(
+      `Tarih: ${expense.expense_date}\n` +
+      `Dolduran: ${expense.submitter_name}\n` +
+      `Açıklama: ${expense.description}\n` +
+      `Fiş no: ${expense.receipt_number || "—"}\n` +
+      `Tutar: ${money(expense.amount)}\n` +
+      `KDV: ${money(expense.vat_amount)}\n` +
+      `Toplam: ${money(Number(expense.amount) + Number(expense.vat_amount))}\n` +
+      `Detay: ${expense.detail || "—"}\n` +
+      `Durum: ${label}\n` +
+      `Onaylayan: ${expense.approver_name || "—"}\n` +
+      `Onay notu: ${expense.approval_note || "—"}`
+    );
+  }
+
+  function setupCanvas() {
+    const canvas = $("signature-canvas");
+    const context = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+    canvas.height = Math.floor(180 * ratio);
+
+    context.scale(ratio, ratio);
+    context.lineWidth = 2.5;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "#172554";
+  }
+
+  function canvasPoint(event) {
+    const canvas = $("signature-canvas");
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  }
+
+  function openApproval(id) {
+    selectedExpense = expenses.find(item => item.id === id);
+    if (!selectedExpense) return;
+
+    $("approval-details").innerHTML = `
+      <p><strong>Formu dolduran:</strong> ${esc(selectedExpense.submitter_name)}</p>
+      <p><strong>Tarih:</strong> ${esc(selectedExpense.expense_date)}</p>
+      <p><strong>Açıklama:</strong> ${esc(selectedExpense.description)}</p>
+      <p><strong>Fiş no:</strong> ${esc(selectedExpense.receipt_number || "—")}</p>
+      <p><strong>Tutar:</strong> ${money(selectedExpense.amount)}</p>
+      <p><strong>KDV:</strong> ${money(selectedExpense.vat_amount)}</p>
+      <p><strong>Genel toplam:</strong> ${money(Number(selectedExpense.amount) + Number(selectedExpense.vat_amount))}</p>
+      <p><strong>Masraf detayı:</strong> ${esc(selectedExpense.detail || "—")}</p>
+    `;
+
+    $("approver-name").value = profile.full_name || profile.username;
+    $("approval-note").value = "";
+
+    hasSignature = false;
+    $("approval-dialog").showModal();
+
+    requestAnimationFrame(() => {
+      setupCanvas();
+      clearSignature();
+    });
+  }
+
+  function clearSignature() {
+    const canvas = $("signature-canvas");
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    hasSignature = false;
+  }
+
+  $("signature-canvas").addEventListener("pointerdown", event => {
+    event.preventDefault();
+
+    const canvas = $("signature-canvas");
+    const context = canvas.getContext("2d");
+    const point = canvasPoint(event);
+
+    canvas.setPointerCapture(event.pointerId);
+    context.beginPath();
+    context.moveTo(point.x, point.y);
+    isDrawing = true;
+    hasSignature = true;
+  });
+
+  $("signature-canvas").addEventListener("pointermove", event => {
+    if (!isDrawing) return;
+    event.preventDefault();
+
+    const point = canvasPoint(event);
+    const context = $("signature-canvas").getContext("2d");
+
+    context.lineTo(point.x, point.y);
+    context.stroke();
+  });
+
+  function finishDrawing() {
+    isDrawing = false;
+  }
+
+  $("signature-canvas").addEventListener("pointerup", finishDrawing);
+  $("signature-canvas").addEventListener("pointercancel", finishDrawing);
+  $("clear-signature").addEventListener("click", clearSignature);
+
+  async function decideExpense(status) {
+    if (profile?.role !== "admin" || !selectedExpense) return;
+
+    if (status === "approved" && !hasSignature) {
+      tell("Onay için imza alanına imza çizmeniz gerekiyor.", true);
+      return;
+    }
+
+    const update = {
+      status,
+      approver_id: currentUser.id,
+      approver_name: (profile.full_name || profile.username).trim(),
+      approval_note: $("approval-note").value.trim() || null,
+      approved_at: new Date().toISOString(),
+      approver_signature: status === "approved"
+        ? $("signature-canvas").toDataURL("image/png")
+        : null,
+      updated_at: new Date().toISOString()
+    };
+
+    $("approve-expense").disabled = true;
+    $("reject-expense").disabled = true;
+
+    const { error } = await db.from("expenses")
+      .update(update)
+      .eq("id", selectedExpense.id)
+      .eq("status", "pending");
+
+    $("approve-expense").disabled = false;
+    $("reject-expense").disabled = false;
+
+    if (error) {
+      tell("Masraf güncellenemedi: " + error.message, true);
+      return;
+    }
+
+    $("approval-dialog").close();
+    selectedExpense = null;
+    tell(status === "approved" ? "Masraf onaylandı." : "Masraf reddedildi.");
+    await loadExpenses();
+  }
+
+  $("expense-form").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (profile?.role !== "seller") {
+      tell("Masraf kaydını yalnızca satıcı oluşturabilir.", true);
+      return;
+    }
+
+    const amount = Number($("amount").value);
+    const vatAmount = Number($("vat-amount").value);
+
+    if (!Number.isFinite(amount) || amount < 0 ||
+        !Number.isFinite(vatAmount) || vatAmount < 0) {
+      tell("Tutar ve KDV sıfırdan küçük olamaz.", true);
+      return;
+    }
+
+    $("submit-expense").disabled = true;
+    tell("Masraf kaydediliyor…");
+
+    const { error } = await db.from("expenses").insert({
+      seller_id: currentUser.id,
+      submitter_name: profile.full_name || profile.username,
+      expense_date: $("expense-date").value,
+      description: $("description").value.trim(),
+      receipt_number: $("receipt-number").value.trim() || null,
+      amount,
+      vat_amount: vatAmount,
+      detail: $("detail").value.trim() || null,
+      status: "pending"
+    });
+
+    $("submit-expense").disabled = false;
+
+    if (error) {
+      tell("Masraf kaydedilemedi: " + error.message, true);
+      return;
+    }
+
+    $("expense-form").reset();
+    $("expense-date").value = localDate();
+    $("submitter-name").value = profile.full_name || profile.username;
+    $("vat-amount").value = "0";
+    updateFormTotal();
+
+    tell("Masraf bildirimi kaydedildi ve admin onayına gönderildi.");
+    await loadExpenses();
+  });
+
+  $("amount").addEventListener("input", updateFormTotal);
+  $("vat-amount").addEventListener("input", updateFormTotal);
+
+  $("login-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    tell("Giriş yapılıyor…");
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("email").value,
+      password: $("password").value
+    });
+
+    if (error) {
+      tell("Giriş başarısız: " + error.message, true);
+      return;
+    }
+
+    try {
+      await openApp(data.user);
+      tell("Giriş başarılı.");
+    } catch (error) {
+      tell("Sayfa açılamadı: " + error.message, true);
+    }
+  });
+
+  $("refresh").addEventListener("click", loadExpenses);
+  $("filter-month").addEventListener("change", loadExpenses);
+  $("approve-expense").addEventListener("click", () => decideExpense("approved"));
+  $("reject-expense").addEventListener("click", () => decideExpense("rejected"));
+  $("close-dialog").addEventListener("click", () => $("approval-dialog").close());
+
+  $("logout").addEventListener("click", async () => {
+    await db.auth.signOut();
+    location.reload();
+  });
+
+  $("expense-date").value = localDate();
+  $("filter-month").value = localMonth();
+  updateFormTotal();
+
+  db.auth.getSession().then(async ({ data }) => {
+    if (!data.session) return;
+
+    try {
+      await openApp(data.session.user);
+    } catch (error) {
+      tell("Oturum açılamadı: " + error.message, true);
+    }
+  });
+</script>
+</body>
+</html>
