@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172554">
+  <title>KBR Piknik Ürünleri | Yönetim Merkezi</title>
+
+  <style>
+    :root {
+      --navy: #172554;
+      --green: #16845b;
+      --orange: #f28c28;
+      --purple: #7656d6;
+      --blue: #2586d1;
+      --ink: #182230;
+      --muted: #697586;
+      --surface: #fff;
+      --page: #f4f7fb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 8% 10%, #e2efff 0, transparent 24rem),
+        radial-gradient(circle at 95% 25%, #fff0df 0, transparent 20rem),
+        var(--page);
+    }
+
+    button, input, a { font: inherit; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgb(255 255 255 / 92%);
+      border-bottom: 1px solid #e7ebf1;
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner {
+      width: min(1180px, calc(100% - 36px));
+      min-height: 82px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 58px;
+      height: 58px;
+      padding: 3px;
+      object-fit: contain;
+      border-radius: 14px;
+      background: white;
+      box-shadow: 0 3px 12px #18223016;
+    }
+
+    .brand-name {
+      margin: 0;
+      color: var(--navy);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -.3px;
+    }
+
+    .brand-subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .topbar-date {
+      margin-left: auto;
+      color: var(--muted);
+      text-align: right;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    main {
+      width: min(1180px, calc(100% - 36px));
+      margin: 36px auto 50px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(26px, 5vw, 52px);
+      color: #fff;
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 85% 10%, #ffffff36, transparent 15rem),
+        linear-gradient(120deg, #172554 0%, #2658a8 58%, #18805e 100%);
+      box-shadow: 0 18px 44px #1b3d7924;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -65px;
+      bottom: -125px;
+      width: 300px;
+      height: 300px;
+      border: 38px solid #ffffff15;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 690px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 15px;
+      padding: 7px 12px;
+      color: #fff;
+      background: #ffffff20;
+      border: 1px solid #ffffff35;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .4px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.08;
+      letter-spacing: -1.2px;
+    }
+
+    .hero p {
+      max-width: 570px;
+      margin: 15px 0 23px;
+      color: #e6efff;
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 17px;
+      color: var(--navy);
+      background: #fff;
+      border-radius: 11px;
+      text-decoration: none;
+      font-weight: 800;
+      box-shadow: 0 5px 15px #00000018;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .hero-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 9px 20px #00000026;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 34px 0 16px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 23px;
+    }
+
+    .section-heading p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .search-wrap {
+      position: relative;
+      width: min(310px, 100%);
+    }
+
+    .search-wrap span {
+      position: absolute;
+      top: 50%;
+      left: 13px;
+      transform: translateY(-50%);
+      color: #778398;
+      pointer-events: none;
+    }
+
+    .search {
+      width: 100%;
+      padding: 12px 14px 12px 40px;
+      color: var(--ink);
+      background: white;
+      border: 1px solid #e1e6ee;
+      border-radius: 12px;
+      outline: none;
+      box-shadow: 0 4px 12px #18223008;
+    }
+
+    .search:focus {
+      border-color: #6a8fe5;
+      box-shadow: 0 0 0 4px #6a8fe51a;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .module-card {
+      --accent: var(--green);
+      --tint: #e8f7ef;
+      position: relative;
+      display: flex;
+      min-height: 255px;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 23px;
+      background: var(--surface);
+      border: 1px solid #e7ebf1;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px #1822300b;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .module-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      height: 5px;
+      background: var(--accent);
+    }
+
+    .module-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 32px #18223017;
+    }
+
+    .module-card.orange { --accent: var(--orange); --tint: #fff2e3; }
+    .module-card.purple { --accent: var(--purple); --tint: #f0ecff; }
+    .module-card.blue { --accent: var(--blue); --tint: #e8f3ff; }
+
+    .card-icon {
+      display: grid;
+      width: 54px;
+      height: 54px;
+      place-items: center;
+      margin-bottom: 17px;
+      color: var(--accent);
+      background: var(--tint);
+      border-radius: 16px;
+      font-size: 26px;
+    }
+
+    .module-card h3 {
+      margin: 0 0 8px;
+      color: var(--navy);
+      font-size: 20px;
+    }
+
+    .module-card p {
+      flex: 1;
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .card-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      color: white;
+      background: var(--accent);
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 800;
+      transition: filter .15s ease;
+    }
+
+    .card-link:hover { filter: brightness(.93); }
+
+    .empty-state {
+      display: none;
+      margin-top: 15px;
+      padding: 18px;
+      color: var(--muted);
+      background: white;
+      border: 1px dashed #cbd5e1;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 25px;
+      padding: 18px;
+      background: #ffffffc9;
+      border: 1px solid #e7ebf1;
+      border-radius: 16px;
+    }
+
+    .quick-links strong {
+      width: 100%;
+      color: var(--navy);
+      font-size: 14px;
+    }
+
+    .quick-links a {
+      padding: 9px 12px;
+      color: #344054;
+      background: #f2f5f9;
+      border-radius: 9px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .quick-links a:hover {
+      color: var(--navy);
+      background: #e7edf8;
+    }
+
+    footer {
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    @media (max-width: 850px) {
+      .module-grid { grid-template-columns: 1fr 1fr; }
+      .module-card:last-child { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 600px) {
+      .topbar-inner, main { width: min(100% - 24px, 1180px); }
+      .topbar-inner { min-height: 72px; }
+      .logo { width: 48px; height: 48px; }
+      .brand-name { font-size: 15px; }
+      .brand-subtitle { font-size: 11px; }
+      .topbar-date { font-size: 11px; }
+      main { margin-top: 22px; }
+      .hero { border-radius: 20px; }
+      .section-heading { align-items: stretch; flex-direction: column; }
+      .search-wrap { width: 100%; }
+      .module-grid { grid-template-columns: 1fr; }
+      .module-card:last-child { grid-column: auto; }
+      .module-card { min-height: 225px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <img class="logo" src="./kbr-logo.png" alt="KBR Piknik Ürünleri logosu">
+      <div>
+        <p class="brand-name">KBR Piknik Ürünleri</p>
+        <p class="brand-subtitle">Sipariş ve bayi yönetim sistemi</p>
+      </div>
+      <div class="topbar-date">
+        <div id="today"></div>
+        <strong id="clock"></strong>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <span class="eyebrow">KBR YÖNETİM MERKEZİ</span>
+        <h1>İşlemleriniz<br>tek bir yerde.</h1>
+        <p>
+          Siparişleri yönetin, bayi envanterini takip edin ve bayi stoklarına
+          hızlıca ulaşın.
+        </p>
+        <a class="hero-link" href="./siparis.html">
+          Sipariş bölümüne git <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+
+    <div class="section-heading">
+      <div>
+        <h2>Çalışma alanları</h2>
+        <p>Açmak istediğiniz bölümü seçin veya arama yapın.</p>
+      </div>
+
+      <label class="search-wrap">
+        <span aria-hidden="true">⌕</span>
+        <input
+          class="search"
+          id="module-search"
+          type="search"
+          placeholder="Bölüm ara…"
+          aria-label="Bölümlerde ara"
+        >
+      </label>
+    </div>
+
+    <section class="module-grid" id="module-grid">
+      <article class="module-card orange" data-search="sipariş siparis order">
+        <div class="card-icon" aria-hidden="true">🧾</div>
+        <h3>Sipariş</h3>
+        <p>
+          Yeni sipariş oluşturun, siparişleri görüntüleyin ve durumlarını takip edin.
+        </p>
+        <a class="card-link" href="./siparis.html">
+          Siparişleri aç <span aria-hidden="true">→</span>
+        </a>
+      </article>
+
+      <article class="module-card purple" data-search="bayi envanter ürün mal kabul">
+        <div class="card-icon" aria-hidden="true">📦</div>
+        <h3>Bayi Envanter</h3>
+        <p>
+          Bayi envanter kayıtlarını ve ürün hareketlerini yönetmek için bu bölümü açın.
+        </p>
+        <a class="card-link" href="./bayi-envanter.html">
+          Envantere git <span aria-hidden="true">→</span>
+        </a>
+      </article>
+
+      <article class="module-card blue" data-search="bayi stok miktar depo">
+        <div class="card-icon" aria-hidden="true">🏬</div>
+        <h3>Bayi Stok</h3>
+        <p>
+          Bayilerin mevcut ürün stoklarını görüntüleme ve takip bölümüne gidin.
+        </p>
+        <a class="card-link" href="./bayi-stok.html">
+          Bayi stoklarını aç <span aria-hidden="true">→</span>
+        </a>
+      </article>
+    </section>
+
+    <div class="empty-state" id="empty-state">
+      Aramanızla eşleşen bir bölüm bulunamadı.
+    </div>
+
+    </main>
+
+  <footer>
+    KBR Piknik Ürünleri A.Ş. — Sipariş ve Bayi Yönetim Sistemi
+  </footer>
+
+  <script>
+    const searchInput = document.getElementById("module-search");
+    const cards = [...document.querySelectorAll(".module-card")];
+    const emptyState = document.getElementById("empty-state");
+
+    searchInput.addEventListener("input", () => {
+      const query = searchInput.value.trim().toLocaleLowerCase("tr");
+
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const text = (
+          card.innerText + " " + (card.dataset.search || "")
+        ).toLocaleLowerCase("tr");
+
+        const visible = text.includes(query);
+        card.style.display = visible ? "" : "none";
+
+        if (visible) visibleCount++;
+      });
+
+      emptyState.style.display = visibleCount ? "none" : "block";
+    });
+
+    function updateDateTime() {
+      const now = new Date();
+
+      document.getElementById("today").textContent =
+        now.toLocaleDateString("tr-TR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        });
+
+      document.getElementById("clock").textContent =
+        now.toLocaleTimeString("tr-TR", {
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 30000);
+  </script>
+</body>
+</html>
