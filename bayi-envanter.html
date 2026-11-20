@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBR | Bayi Envanter</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; padding:20px; font:15px Arial,sans-serif; color:#1f2937; background:#f4f7f5; }
+    main { max-width:1200px; margin:auto; }
+    section { margin:16px 0; padding:20px; background:white; border:1px solid #e2e8f0; border-radius:10px; }
+    h1,h2 { color:#173b2e; }
+    label { display:block; margin:8px 0 5px; font-weight:600; }
+    input,select,textarea,button { padding:10px; border:1px solid #cbd5e1; border-radius:6px; font:inherit; }
+    input,select,textarea { max-width:100%; }
+    button { cursor:pointer; border:0; color:white; background:#17633d; }
+    button.secondary { background:#475569; }
+    .field { margin:10px 0; }
+    .field input,.field select,.field textarea { width:100%; }
+    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .scroll { overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:850px; }
+    th,td { padding:9px; border-bottom:1px solid #e2e8f0; text-align:left; vertical-align:middle; }
+    td input { width:90px; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
+    .toolbar .field { min-width:190px; }
+    #message { margin:12px 0; white-space:pre-wrap; }
+    .hidden { display:none !important; }
+    .note { color:#64748b; font-size:13px; line-height:1.5; }
+    .top-link { color:#17633d; text-decoration:none; }
+    dialog { width:min(900px,95vw); max-height:85vh; border:0; border-radius:10px; padding:20px; }
+    dialog::backdrop { background:#0008; }
+    @media(max-width:700px) {
+      body { padding:10px; }
+      .grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <p><a class="top-link" href="./index.html">← Ana sayfa</a></p>
+  <h1>KBR Bayi Envanter</h1>
+  <div id="message" role="status"></div>
+
+  <section id="login-section">
+    <h2>Giriş</h2>
+    <form id="login-form">
+      <div class="field">
+        <label for="email">E-posta</label>
+        <input id="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Şifre</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Giriş yap</button>
+    </form>
+  </section>
+
+  <div id="app" class="hidden">
+    <p>
+      <span id="user-label"></span>
+      <button type="button" id="logout" class="secondary">Çıkış yap</button>
+    </p>
+
+    <section id="entry-section" class="hidden">
+      <h2>Yeni envanter sayımı</h2>
+      <p class="note">
+        Paket, koli ve palet miktarlarını ayrı girin. Toplam adet otomatik hesaplanır:
+        paket × paket içi + koli × koli içi + palet × paletteki koli × koli içi.
+      </p>
+
+      <form id="inventory-form">
+        <div class="grid">
+          <div class="field">
+            <label for="dealer-select">Yetkili olduğunuz bayi</label>
+            <select id="dealer-select" required>
+              <option value="">Bayi seçin</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="inventory-date">Sayım tarihi</label>
+            <input id="inventory-date" type="date" required>
+          </div>
+          <div class="field">
+            <label for="notes">Not</label>
+            <input id="notes" type="text" maxlength="500" placeholder="İsteğe bağlı">
+          </div>
+        </div>
+
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Ürün kodu</th>
+                <th>Açıklama</th>
+                <th>Paket</th>
+                <th>Koli</th>
+                <th>Palet</th>
+                <th>Toplam adet</th>
+              </tr>
+            </thead>
+            <tbody id="product-rows"></tbody>
+          </table>
+        </div>
+
+        <p style="margin-top:16px">
+          <button type="submit" id="save-count">Envanteri kaydet</button>
+        </p>
+      </form>
+    </section>
+
+    <section>
+      <h2>Envanter kayıtları ve rapor</h2>
+      <div class="toolbar">
+        <div class="field">
+          <label for="filter-month">Ay filtresi</label>
+          <input id="filter-month" type="month">
+        </div>
+        <div class="field">
+          <label for="filter-dealer">Bayi filtresi</label>
+          <select id="filter-dealer">
+            <option value="">Tüm yetkili bayiler</option>
+          </select>
+        </div>
+        <button type="button" id="refresh" class="secondary">Raporu yenile</button>
+      </div>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarih</th>
+              <th>Bayi</th>
+              <th>Durum</th>
+              <th>Kaydeden</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="counts-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog id="detail-dialog">
+  <h2>Envanter sayımı detayı</h2>
+  <div id="detail-content"></div>
+  <button type="button" id="close-detail" class="secondary">Kapat</button>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+  const $ = id => document.getElementById(id);
+  let currentUser = null;
+  let profile = null;
+  let dealers = [];
+  let products = [];
+  let counts = [];
+
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+
+  function tell(text, error = false) {
+    $("message").textContent = text;
+    $("message").style.color = error ? "#a83232" : "#17633d";
+  }
+
+  function todayLocal() {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  function productTotal(product, packageQty, cartonQty, palletQty) {
+    const values = [
+      Number(packageQty || 0),
+      Number(cartonQty || 0),
+      Number(palletQty || 0)
+    ];
+
+    if (values[0] && product.pack_inner == null) return null;
+    if (values[1] && product.carton_inner == null) return null;
+    if (values[2] && (product.pallet_inner == null || product.carton_inner == null)) return null;
+
+    return values[0] * Number(product.pack_inner || 0)
+      + values[1] * Number(product.carton_inner || 0)
+      + values[2] * Number(product.pallet_inner || 0) * Number(product.carton_inner || 0);
+  }
+
+  async function openApp(user) {
+    currentUser = user;
+
+    const { data, error } = await db.from("profiles")
+      .select("username, full_name, role, active")
+      .eq("id", user.id)
+      .single();
+
+    if (error) throw error;
+    if (!data.active) throw new Error("Kullanıcı hesabı devre dışı.");
+
+    profile = data;
+    $("login-section").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("user-label").textContent = `${data.full_name || data.username} — ${data.role}`;
+
+    if (data.role === "seller") {
+      $("entry-section").classList.remove("hidden");
+      await loadSellerDealers();
+      await loadProducts();
+    } else if (data.role === "admin") {
+      await loadAdminDealers();
+    } else {
+      throw new Error("Bu sayfaya erişim yetkiniz yok.");
+    }
+
+    await loadCounts();
+  }
+
+  async function loadSellerDealers() {
+    const { data, error } = await db.from("dealers")
+      .select("id, name, dealer_code")
+      .eq("active", true)
+      .order("name");
+
+    if (error) throw error;
+    dealers = data || [];
+
+    $("dealer-select").innerHTML =
+      '<option value="">Bayi seçin</option>' +
+      dealers.map(d =>
+        `<option value="${d.id}">${esc(d.dealer_code ? d.dealer_code + " — " : "")}${esc(d.name)}</option>`
+      ).join("");
+
+    $("filter-dealer").innerHTML =
+      '<option value="">Tüm yetkili bayiler</option>' +
+      dealers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+  }
+
+  async function loadAdminDealers() {
+    const { data, error } = await db.from("dealers")
+      .select("id, name, dealer_code")
+      .order("name");
+
+    if (error) throw error;
+    dealers = data || [];
+
+    $("filter-dealer").innerHTML =
+      '<option value="">Tüm bayiler</option>' +
+      dealers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+  }
+
+  async function loadProducts() {
+    const { data, error } = await db.from("products")
+      .select("id, product_code, description, pack_inner, carton_inner, pallet_inner, active")
+      .eq("active", true)
+      .order("product_code");
+
+    if (error) throw error;
+    products = data || [];
+
+    $("product-rows").innerHTML = products.map(p => `
+      <tr data-product-id="${p.id}">
+        <td>${esc(p.product_code)}</td>
+        <td>${esc(p.description)}</td>
+        <td><input class="package-qty" type="number" min="0" step="1" value="0" aria-label="Paket miktarı"></td>
+        <td><input class="carton-qty" type="number" min="0" step="1" value="0" aria-label="Koli miktarı"></td>
+        <td><input class="pallet-qty" type="number" min="0" step="1" value="0" aria-label="Palet miktarı"></td>
+        <td class="total-units">0</td>
+      </tr>
+    `).join("");
+
+    document.querySelectorAll("#product-rows input").forEach(input => {
+      input.addEventListener("input", updateRowTotal);
+    });
+  }
+
+  function updateRowTotal(event) {
+    const row = event.target.closest("tr");
+    const product = products.find(p => String(p.id) === row.dataset.productId);
+    if (!product) return;
+
+    const total = productTotal(
+      product,
+      row.querySelector(".package-qty").value,
+      row.querySelector(".carton-qty").value,
+      row.querySelector(".pallet-qty").value
+    );
+
+    row.querySelector(".total-units").textContent =
+      total === null ? "Ambalaj bilgisi eksik" : total.toLocaleString("tr-TR");
+  }
+
+  $("dealer-select").addEventListener("change", async () => {
+    const dealerId = $("dealer-select").value;
+    if (!dealerId || !profile) return;
+
+    const { data, error } = await db.from("inventory_counts")
+      .select("id")
+      .eq("dealer_id", dealerId)
+      .eq("inventory_date", $("inventory-date").value)
+      .eq("status", "submitted")
+      .limit(1);
+
+    if (error) {
+      tell("Mevcut sayım kontrol edilemedi: " + error.message, true);
+      return;
+    }
+
+    if (data?.length) {
+      tell("Bu bayi için seçilen tarihte gönderilmiş bir sayım zaten var.", true);
+    } else {
+      tell("");
+    }
+  });
+
+  $("inventory-date").value = todayLocal();
+
+  $("inventory-form").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (profile?.role !== "seller") {
+      tell("Envanter sayımını yalnızca satıcı girebilir.", true);
+      return;
+    }
+
+    const dealerId = Number($("dealer-select").value);
+    if (!dealerId) {
+      tell("Bayi seçin.", true);
+      return;
+    }
+
+    const existing = await db.from("inventory_counts")
+      .select("id")
+      .eq("dealer_id", dealerId)
+      .eq("inventory_date", $("inventory-date").value)
+      .eq("status", "submitted")
+      .limit(1);
+
+    if (existing.error) {
+      tell("Sayım kontrolü başarısız: " + existing.error.message, true);
+      return;
+    }
+
+    if (existing.data?.length) {
+      tell("Bu bayi için bu tarihte gönderilmiş sayım zaten var.", true);
+      return;
+    }
+
+    const rows = [...document.querySelectorAll("#product-rows tr")];
+
+    const entries = rows.map(row => {
+      const product = products.find(p => String(p.id) === row.dataset.productId);
+
+      return {
+        product,
+        package_qty: Number(row.querySelector(".package-qty").value || 0),
+        carton_qty: Number(row.querySelector(".carton-qty").value || 0),
+        pallet_qty: Number(row.querySelector(".pallet-qty").value || 0)
+      };
+    }).filter(x =>
+      x.package_qty > 0 || x.carton_qty > 0 || x.pallet_qty > 0
+    );
+
+    if (!entries.length) {
+      tell("En az bir ürün için paket, koli veya palet miktarı girin.", true);
+      return;
+    }
+
+    const invalid = entries.find(x =>
+      (x.package_qty > 0 && x.product.pack_inner == null) ||
+      (x.carton_qty > 0 && x.product.carton_inner == null) ||
+      (x.pallet_qty > 0 && (x.product.pallet_inner == null || x.product.carton_inner == null))
+    );
+
+    if (invalid) {
+      tell(`“${invalid.product.product_code}” ürünü için gerekli paket/koli/palet dönüşüm bilgileri eksik. Önce ürün kartını düzeltin.`, true);
+      return;
+    }
+
+    $("save-count").disabled = true;
+    tell("Envanter kaydediliyor…");
+
+    try {
+      const { data: count, error: countError } = await db
+        .from("inventory_counts")
+        .insert({
+          dealer_id: dealerId,
+          seller_id: currentUser.id,
+          inventory_date: $("inventory-date").value,
+          status: "draft",
+          notes: $("notes").value.trim() || null
+        })
+        .select()
+        .single();
+
+      if (countError) throw countError;
+
+      const itemRows = entries.map(x => ({
+        inventory_count_id: count.id,
+        product_id: x.product.id,
+        package_qty: x.package_qty,
+        carton_qty: x.carton_qty,
+        pallet_qty: x.pallet_qty
+      }));
+
+      const { error: itemError } = await db.from("inventory_items").insert(itemRows);
+      if (itemError) throw itemError;
+
+      const { error: submitError } = await db.from("inventory_counts")
+        .update({
+          status: "submitted",
+          submitted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", count.id);
+
+      if (submitError) throw submitError;
+
+      $("inventory-form").reset();
+      $("inventory-date").value = todayLocal();
+      document.querySelectorAll("#product-rows input").forEach(input => {
+        input.value = "0";
+      });
+      document.querySelectorAll(".total-units").forEach(cell => {
+        cell.textContent = "0";
+      });
+
+      tell("Envanter sayımı kaydedildi.");
+      await loadCounts();
+    } catch (error) {
+      tell("Envanter kaydedilemedi: " + error.message, true);
+    } finally {
+      $("save-count").disabled = false;
+    }
+  });
+
+  async function loadCounts() {
+    if (!profile) return;
+
+    let query = db.from("inventory_counts")
+      .select("*")
+      .order("inventory_date", { ascending: false });
+
+    const month = $("filter-month").value;
+    if (month) {
+      query = query
+        .gte("inventory_date", `${month}-01`)
+        .lt("inventory_date", nextMonth(month));
+    }
+
+    const dealerId = $("filter-dealer").value;
+    if (dealerId) query = query.eq("dealer_id", Number(dealerId));
+
+    const { data, error } = await query;
+    if (error) {
+      tell("Envanter raporu yüklenemedi: " + error.message, true);
+      return;
+    }
+
+    counts = data || [];
+
+    const dealerMap = new Map(dealers.map(d => [Number(d.id), d.name]));
+
+    $("counts-body").innerHTML = counts.map(count => `
+      <tr>
+        <td>${esc(count.inventory_date)}</td>
+        <td>${esc(dealerMap.get(Number(count.dealer_id)) || "Bayi")}</td>
+        <td>${count.status === "submitted" ? "Gönderildi" : "Taslak"}</td>
+        <td>${count.seller_id === currentUser.id ? "Siz" : "Satıcı"}</td>
+        <td>
+          <button type="button" class="secondary detail-button" data-id="${esc(count.id)}">
+            Ürünleri gör
+          </button>
+        </td>
+      </tr>
+    `).join("");
+
+    document.querySelectorAll(".detail-button").forEach(button => {
+      button.addEventListener("click", () => showCountDetails(button.dataset.id));
+    });
+  }
+
+  function nextMonth(yyyyMm) {
+    const [year, month] = yyyyMm.split("-").map(Number);
+    const date = new Date(year, month, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+  }
+
+  async function showCountDetails(countId) {
+    const { data: items, error } = await db.from("inventory_items")
+      .select("*")
+      .eq("inventory_count_id", countId)
+      .order("product_code");
+
+    if (error) {
+      tell("Envanter detayları alınamadı: " + error.message, true);
+      return;
+    }
+
+    $("detail-content").innerHTML = `
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Kod</th><th>Ürün</th><th>Paket</th><th>Koli</th><th>Palet</th><th>Toplam adet</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(items || []).map(item => `
+              <tr>
+                <td>${esc(item.product_code)}</td>
+                <td>${esc(item.description)}</td>
+                <td>${Number(item.package_qty || 0).toLocaleString("tr-TR")}</td>
+                <td>${Number(item.carton_qty || 0).toLocaleString("tr-TR")}</td>
+                <td>${Number(item.pallet_qty || 0).toLocaleString("tr-TR")}</td>
+                <td>${item.total_units == null ? "Dönüşüm eksik" : Number(item.total_units).toLocaleString("tr-TR")}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $("detail-dialog").showModal();
+  }
+
+  $("login-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    tell("Giriş yapılıyor…");
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("email").value,
+      password: $("password").value
+    });
+
+    if (error) {
+      tell("Giriş başarısız: " + error.message, true);
+      return;
+    }
+
+    try {
+      await openApp(data.user);
+      tell("Giriş başarılı.");
+    } catch (error) {
+      tell("Sayfa açılamadı: " + error.message, true);
+    }
+  });
+
+  $("logout").addEventListener("click", async () => {
+    await db.auth.signOut();
+    location.reload();
+  });
+
+  $("refresh").addEventListener("click", loadCounts);
+  $("filter-month").addEventListener("change", loadCounts);
+  $("filter-dealer").addEventListener("change", loadCounts);
+  $("close-detail").addEventListener("click", () => $("detail-dialog").close());
+
+  db.auth.getSession().then(async ({ data }) => {
+    if (!data.session) return;
+    try {
+      await openApp(data.session.user);
+    } catch (error) {
+      tell("Oturum açılamadı: " + error.message, true);
+    }
+  });
+</script>
+</body>
+</html>
