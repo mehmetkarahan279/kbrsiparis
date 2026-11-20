@@ -124,6 +124,34 @@
           </select>
         </div>
         <button type="button" id="refresh" class="secondary">Raporu yenile</button>
+        <h3>Aylık stok karşılaştırması</h3>
+<p class="note">
+  Seçilen ayın her bayi için son sayımı, önceki ayın son sayımıyla karşılaştırılır.
+  Fark adet olarak gösterilir.
+</p>
+
+<p>
+  <button type="button" id="export-report" class="secondary">
+    Raporu CSV indir
+  </button>
+</p>
+
+<div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Bayi</th>
+        <th>Ürün kodu</th>
+        <th>Ürün</th>
+        <th>Önceki ay toplam adet</th>
+        <th>Seçilen ay toplam adet</th>
+        <th>Değişim</th>
+      </tr>
+    </thead>
+    <tbody id="report-body"></tbody>
+  </table>
+</div>
+
       </div>
 
       <div class="scroll">
