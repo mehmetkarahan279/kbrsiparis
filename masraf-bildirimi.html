@@ -13,15 +13,18 @@
       padding: 20px;
       color: #1f2937;
       background: #f4f7f5;
-      font: 15px Arial, sans-serif;
+      font: 14px Arial, sans-serif;
     }
 
-    main { max-width: 1100px; margin: auto; }
+    main {
+      max-width: 1150px;
+      margin: auto;
+    }
 
     section {
       margin: 16px 0;
       padding: 20px;
-      background: white;
+      background: #fff;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
     }
@@ -47,7 +50,7 @@
     button {
       width: auto;
       cursor: pointer;
-      color: white;
+      color: #fff;
       background: #17633d;
       border: 0;
     }
@@ -77,15 +80,21 @@
 
     table {
       width: 100%;
-      min-width: 760px;
+      min-width: 780px;
       border-collapse: collapse;
     }
 
     th, td {
-      padding: 10px;
+      padding: 9px;
+      border: 1px solid #d7dee7;
       text-align: left;
       vertical-align: top;
-      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      color: #173b2e;
+      background: #eef3f0;
+      font-weight: 700;
     }
 
     #message {
@@ -110,7 +119,7 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
-      margin-top: 18px;
+      margin: 18px 0;
     }
 
     .total-card {
@@ -124,19 +133,20 @@
       display: block;
       margin-bottom: 7px;
       color: #64748b;
-      font-size: 13px;
+      font-size: 12px;
     }
 
     .total-card strong {
       color: #173b2e;
-      font-size: 19px;
+      font-size: 18px;
     }
 
     .status {
       display: inline-block;
+      margin-top: 5px;
       padding: 4px 8px;
       border-radius: 20px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
     }
 
@@ -144,8 +154,38 @@
     .status-approved { color: #166534; background: #dcfce7; }
     .status-rejected { color: #991b1b; background: #fee2e2; }
 
+    .description-cell {
+      min-width: 220px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .description-cell button { margin-top: 6px; }
+
+    .form-signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 22px 0 14px;
+    }
+
+    .signature-box {
+      min-height: 105px;
+      padding: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #fff;
+    }
+
+    .signature-box strong,
+    .signature-box span {
+      display: block;
+    }
+
+    .signature-box span { margin-top: 22px; }
+
     dialog {
-      width: min(720px, 96vw);
+      width: min(760px, 96vw);
       max-height: 90vh;
       overflow: auto;
       padding: 22px;
@@ -158,7 +198,7 @@
     #signature-canvas {
       display: block;
       width: 100%;
-      height: 180px;
+      height: 170px;
       background: white;
       border: 1px solid #94a3b8;
       border-radius: 6px;
@@ -172,10 +212,120 @@
       margin-top: 16px;
     }
 
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+
+    .detail-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .detail-item strong { color: #173b2e; }
+
+    .signature-image {
+      display: block;
+      max-width: 240px;
+      max-height: 100px;
+      margin-top: 8px;
+      object-fit: contain;
+      border: 1px solid #e2e8f0;
+      background: white;
+    }
+
+    .print-only { display: none; }
+
     @media (max-width: 650px) {
       body { padding: 10px; }
       section { padding: 15px; }
-      .grid, .totals { grid-template-columns: 1fr; }
+      .grid, .totals, .form-signatures, .detail-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      @page { size: A4 landscape; margin: 12mm; }
+
+      body, main {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        background: #fff;
+      }
+
+      body * { visibility: hidden !important; }
+
+      #expense-report-section,
+      #expense-report-section * {
+        visibility: visible !important;
+      }
+
+      #expense-report-section {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+      }
+
+      #expense-report-section button,
+      #expense-report-section input,
+      #expense-report-section select,
+      #expense-report-section label,
+      #expense-report-section .toolbar {
+        display: none !important;
+      }
+
+      #expense-report-section table {
+        width: 100%;
+        min-width: 0;
+        border-collapse: collapse;
+      }
+
+      #expense-report-section th,
+      #expense-report-section td {
+        padding: 6px;
+        border: 1px solid #777;
+        color: #000;
+        font-size: 9pt;
+      }
+
+      #expense-report-section th { background: #e9eeeb !important; }
+      #expense-report-section .totals { margin: 12px 0; }
+      #expense-report-section .total-card {
+        padding: 8px;
+        border: 1px solid #777;
+        background: #fff !important;
+      }
+      #expense-report-section .total-card strong { font-size: 12pt; }
+
+      .print-only { display: block !important; }
+
+      .print-signatures {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+        margin-top: 25px;
+        page-break-inside: avoid;
+      }
+
+      .print-signature-box {
+        min-height: 100px;
+        padding: 12px;
+        border: 1px solid #777;
+      }
+
+      .print-signature-box img {
+        display: block;
+        max-width: 180px;
+        max-height: 65px;
+        margin-top: 5px;
+        object-fit: contain;
+      }
     }
   </style>
 </head>
@@ -193,10 +343,12 @@
         <label for="email">E-posta</label>
         <input id="email" type="email" autocomplete="username" required>
       </div>
+
       <div class="field">
         <label for="password">Şifre</label>
         <input id="password" type="password" autocomplete="current-password" required>
       </div>
+
       <button type="submit">Giriş yap</button>
     </form>
   </section>
@@ -208,7 +360,7 @@
     </p>
 
     <section id="expense-form-section" class="hidden">
-      <h2>Yeni masraf bildirimi</h2>
+      <h2>Masraf formu</h2>
 
       <form id="expense-form">
         <div class="grid">
@@ -218,7 +370,7 @@
           </div>
 
           <div class="field">
-            <label for="receipt-number">Masraf fiş no</label>
+            <label for="receipt-number">Fiş No</label>
             <input id="receipt-number" maxlength="100" placeholder="Fiş numarası">
           </div>
 
@@ -239,23 +391,41 @@
           </div>
 
           <div class="field">
-            <label>Formu dolduran</label>
+            <label for="submitter-name">Formu dolduran</label>
             <input id="submitter-name" readonly>
           </div>
         </div>
 
         <div class="field">
           <label for="detail">Masraf detayı</label>
-          <textarea id="detail" maxlength="2000" rows="4"
-                    placeholder="Masrafla ilgili ayrıntılar"></textarea>
+          <textarea id="detail" maxlength="2000" rows="3"
+                    placeholder="Masrafla ilgili açıklama"></textarea>
         </div>
 
         <p><strong>Toplam (KDV dahil): <span id="form-total">0,00 TL</span></strong></p>
-        <button type="submit" id="submit-expense">Masrafı kaydet</button>
+
+        <div class="form-signatures">
+          <div class="signature-box">
+            <strong>Formu dolduran</strong>
+            <span id="form-submitter-footer">Satıcı adı girişte gösterilir.</span>
+          </div>
+          <div class="signature-box">
+            <strong>Formu onaylayan</strong>
+            <span>Admin onayından sonra adı ve imzası kayda eklenir.</span>
+          </div>
+        </div>
+
+        <button type="submit" id="submit-expense">Masrafı kaydet ve onaya gönder</button>
       </form>
     </section>
 
-    <section>
+    <section id="expense-report-section">
+      <div class="print-only">
+        <h1>KBR Piknik Ürünleri — Masraf Raporu</h1>
+        <p>Dönem: <strong id="print-period"></strong></p>
+        <p>Rapor tarihi: <strong id="print-date"></strong></p>
+      </div>
+
       <h2 id="list-title">Masraf kayıtları</h2>
 
       <div class="toolbar">
@@ -264,11 +434,12 @@
           <input id="filter-month" type="month">
         </div>
         <button type="button" id="refresh" class="secondary">Listeyi yenile</button>
+        <button type="button" id="pdf-report" class="secondary">Raporu PDF al</button>
       </div>
 
       <div class="totals">
         <div class="total-card">
-          <span>KDV hariç masraf toplamı</span>
+          <span>KDV hariç toplam</span>
           <strong id="sum-amount">0,00 TL</strong>
         </div>
         <div class="total-card">
@@ -276,29 +447,28 @@
           <strong id="sum-vat">0,00 TL</strong>
         </div>
         <div class="total-card">
-          <span>Genel toplam (KDV dahil)</span>
+          <span>Toplam tutar (KDV dahil)</span>
           <strong id="sum-total">0,00 TL</strong>
         </div>
       </div>
 
-      <div class="scroll" style="margin-top:16px">
+      <div class="scroll">
         <table>
           <thead>
             <tr>
               <th>Tarih</th>
-              <th>Satıcı</th>
+              <th>Fiş No</th>
+              <th>Kimden</th>
+              <th>Tutar (KDV Dahil)</th>
+              <th>KDV Tutarı</th>
               <th>Açıklama</th>
-              <th>Fiş no</th>
-              <th>Tutar</th>
-              <th>KDV</th>
-              <th>Toplam</th>
-              <th>Durum</th>
-              <th>Detay / İşlem</th>
             </tr>
           </thead>
           <tbody id="expenses-body"></tbody>
         </table>
       </div>
+
+      <div id="print-signatures" class="print-only print-signatures"></div>
     </section>
   </div>
 </main>
@@ -308,7 +478,7 @@
   <div id="approval-details"></div>
 
   <div class="field">
-    <label for="approver-name">Onaylayan adı soyadı</label>
+    <label for="approver-name">Formu onaylayan</label>
     <input id="approver-name" readonly>
   </div>
 
@@ -318,17 +488,23 @@
   </div>
 
   <div class="field">
-    <label>Onaylayan imzası (onay için imza çizin)</label>
+    <label>Onaylayan imzası — onay için imza çizin</label>
     <canvas id="signature-canvas"></canvas>
-    <p class="note">İmza alanına fareyle veya dokunmatik ekranda parmağınızla imza atın.</p>
+    <p class="note">İmza alanında fareyle veya dokunmatik ekranda parmağınızla imza atın.</p>
     <button type="button" id="clear-signature" class="secondary">İmzayı temizle</button>
   </div>
 
   <div class="dialog-actions">
     <button type="button" id="approve-expense">Onayla</button>
     <button type="button" id="reject-expense" class="danger">Reddet</button>
-    <button type="button" id="close-dialog" class="secondary">Kapat</button>
+    <button type="button" id="close-approval" class="secondary">Kapat</button>
   </div>
+</dialog>
+
+<dialog id="detail-dialog">
+  <h2>Masraf formu detayı</h2>
+  <div id="detail-content"></div>
+  <button type="button" id="close-detail" class="secondary">Kapat</button>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -363,9 +539,9 @@
     currency: "TRY"
   });
 
-  function tell(text, error = false) {
+  function tell(text, isError = false) {
     $("message").textContent = text;
-    $("message").style.color = error ? "#a83232" : "#17633d";
+    $("message").style.color = isError ? "#a83232" : "#17633d";
   }
 
   function localDate() {
@@ -378,7 +554,7 @@
     return localDate().slice(0, 7);
   }
 
-  function statusLabel(status) {
+  function getStatus(status) {
     if (status === "approved") return ["Onaylandı", "status-approved"];
     if (status === "rejected") return ["Reddedildi", "status-rejected"];
     return ["Onay bekliyor", "status-pending"];
@@ -400,28 +576,28 @@
 
     if (error) throw error;
     if (!data.active) throw new Error("Kullanıcı hesabı devre dışı.");
-
     if (!["seller", "admin"].includes(data.role)) {
       throw new Error("Bu sayfaya erişim yetkiniz yok.");
     }
 
     profile = data;
-    const displayName = data.full_name || data.username;
+    const name = data.full_name || data.username;
 
     $("login-section").classList.add("hidden");
     $("app").classList.remove("hidden");
     $("user-label").textContent =
-      `${displayName} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
-
+      `${name} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
     $("filter-month").value = localMonth();
 
     if (data.role === "seller") {
       $("expense-form-section").classList.remove("hidden");
-      $("submitter-name").value = displayName;
       $("list-title").textContent = "Masraf kayıtlarım";
+      $("submitter-name").value = name;
+      $("form-submitter-footer").textContent = name;
+      $("expense-date").value = localDate();
     } else {
       $("expense-form-section").classList.add("hidden");
-      $("list-title").textContent = "Tüm satıcıların masraf kayıtları";
+      $("list-title").textContent = "Masraf kayıtları";
     }
 
     await loadExpenses();
@@ -436,10 +612,12 @@
       .order("created_at", { ascending: false });
 
     const month = $("filter-month").value;
+
     if (month) {
       const [year, monthNumber] = month.split("-").map(Number);
       const next = new Date(year, monthNumber, 1);
-      const nextMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
+      const nextMonth =
+        `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`;
 
       query = query
         .gte("expense_date", `${month}-01`)
@@ -467,36 +645,43 @@
           const amount = Number(expense.amount || 0);
           const vat = Number(expense.vat_amount || 0);
           const total = amount + vat;
-          const [label, className] = statusLabel(expense.status);
+          const [statusText, statusClass] = getStatus(expense.status);
 
           amountSum += amount;
           vatSum += vat;
           totalSum += total;
 
+          const action = profile.role === "admin" && expense.status === "pending"
+            ? `<button type="button" class="review-expense" data-id="${esc(expense.id)}">İncele / Onayla</button>`
+            : `<button type="button" class="secondary view-expense" data-id="${esc(expense.id)}">Detay</button>`;
+
           return `
             <tr>
               <td>${esc(expense.expense_date)}</td>
-              <td>${esc(expense.submitter_name)}</td>
-              <td>${esc(expense.description)}</td>
               <td>${esc(expense.receipt_number || "—")}</td>
-              <td>${money(amount)}</td>
-              <td>${money(vat)}</td>
+              <td>${esc(expense.submitter_name)}</td>
               <td><strong>${money(total)}</strong></td>
-              <td><span class="status ${className}">${label}</span></td>
-              <td>
-                ${profile.role === "admin" && expense.status === "pending"
-                  ? `<button type="button" class="review-expense" data-id="${esc(expense.id)}">İncele</button>`
-                  : `<button type="button" class="secondary view-expense" data-id="${esc(expense.id)}">Görüntüle</button>`
-                }
+              <td>${money(vat)}</td>
+              <td class="description-cell">
+                <strong>${esc(expense.description)}</strong>
+                <div>${esc(expense.detail || "")}</div>
+                <span class="status ${statusClass}">${statusText}</span>
+                <div>${action}</div>
               </td>
             </tr>
           `;
         }).join("")
-      : `<tr><td colspan="9">Seçilen ay için masraf kaydı bulunamadı.</td></tr>`;
+      : `<tr><td colspan="6">Seçilen ay için masraf kaydı bulunamadı.</td></tr>`;
 
     $("sum-amount").textContent = money(amountSum);
     $("sum-vat").textContent = money(vatSum);
     $("sum-total").textContent = money(totalSum);
+
+    const month = $("filter-month").value;
+    $("print-period").textContent = month || "Tüm dönem";
+    $("print-date").textContent = localDate();
+
+    renderPrintSignatures();
 
     document.querySelectorAll(".review-expense").forEach(button => {
       button.addEventListener("click", () => openApproval(button.dataset.id));
@@ -507,47 +692,92 @@
     });
   }
 
+  function renderPrintSignatures() {
+    const submitters = [...new Set(
+      expenses.map(expense => expense.submitter_name).filter(Boolean)
+    )];
+
+    const approvers = [...new Set(
+      expenses.map(expense => expense.approver_name).filter(Boolean)
+    )];
+
+    const signedExpenses = expenses.filter(
+      expense => expense.status === "approved" && expense.approver_signature
+    );
+
+    $("print-signatures").innerHTML = `
+      <div class="print-signature-box">
+        <strong>Formu dolduran</strong>
+        <p>${esc(submitters.join(", ") || "—")}</p>
+        <p>İmza: ______________________________</p>
+      </div>
+      <div class="print-signature-box">
+        <strong>Formu onaylayan</strong>
+        <p>${esc(approvers.join(", ") || "Henüz onaylanmadı")}</p>
+        ${signedExpenses.map(expense => `
+          <div>
+            <small>${esc(expense.approver_name || "")} — ${esc(expense.expense_date)}</small>
+            <img src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">
+          </div>
+        `).join("")}
+      </div>
+    `;
+  }
+
   function showExpense(id) {
     const expense = expenses.find(item => item.id === id);
     if (!expense) return;
 
-    const [label] = statusLabel(expense.status);
+    const [statusText] = getStatus(expense.status);
+    const signature = expense.approver_signature
+      ? `<img class="signature-image" src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">`
+      : "—";
 
-    alert(
-      `Tarih: ${expense.expense_date}\n` +
-      `Dolduran: ${expense.submitter_name}\n` +
-      `Açıklama: ${expense.description}\n` +
-      `Fiş no: ${expense.receipt_number || "—"}\n` +
-      `Tutar: ${money(expense.amount)}\n` +
-      `KDV: ${money(expense.vat_amount)}\n` +
-      `Toplam: ${money(Number(expense.amount) + Number(expense.vat_amount))}\n` +
-      `Detay: ${expense.detail || "—"}\n` +
-      `Durum: ${label}\n` +
-      `Onaylayan: ${expense.approver_name || "—"}\n` +
-      `Onay notu: ${expense.approval_note || "—"}`
-    );
+    $("detail-content").innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-item"><strong>Tarih:</strong> ${esc(expense.expense_date)}</div>
+        <div class="detail-item"><strong>Fiş No:</strong> ${esc(expense.receipt_number || "—")}</div>
+        <div class="detail-item"><strong>Formu dolduran:</strong> ${esc(expense.submitter_name)}</div>
+        <div class="detail-item"><strong>Durum:</strong> ${esc(statusText)}</div>
+        <div class="detail-item"><strong>Açıklama:</strong> ${esc(expense.description)}</div>
+        <div class="detail-item"><strong>Tutar (KDV hariç):</strong> ${money(expense.amount)}</div>
+        <div class="detail-item"><strong>KDV tutarı:</strong> ${money(expense.vat_amount)}</div>
+        <div class="detail-item"><strong>Tutar (KDV dahil):</strong> ${money(Number(expense.amount) + Number(expense.vat_amount))}</div>
+        <div class="detail-item"><strong>Masraf detayı:</strong> ${esc(expense.detail || "—")}</div>
+        <div class="detail-item"><strong>Formu onaylayan:</strong> ${esc(expense.approver_name || "—")}</div>
+        <div class="detail-item"><strong>Onay / ret notu:</strong> ${esc(expense.approval_note || "—")}</div>
+        <div class="detail-item"><strong>Onay imzası:</strong>${signature}</div>
+      </div>
+    `;
+
+    $("detail-dialog").showModal();
   }
 
   function setupCanvas() {
     const canvas = $("signature-canvas");
-    const context = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
     const ratio = window.devicePixelRatio || 1;
 
     canvas.width = Math.max(1, Math.floor(rect.width * ratio));
-    canvas.height = Math.floor(180 * ratio);
+    canvas.height = Math.floor(170 * ratio);
 
-    context.scale(ratio, ratio);
-    context.lineWidth = 2.5;
+    const context = canvas.getContext("2d");
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    context.lineWidth = 2.4;
     context.lineCap = "round";
     context.lineJoin = "round";
     context.strokeStyle = "#172554";
   }
 
-  function canvasPoint(event) {
+  function clearSignature() {
     const canvas = $("signature-canvas");
-    const rect = canvas.getBoundingClientRect();
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    hasSignature = false;
+  }
 
+  function canvasPoint(event) {
+    const rect = $("signature-canvas").getBoundingClientRect();
     return {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top
@@ -559,19 +789,19 @@
     if (!selectedExpense) return;
 
     $("approval-details").innerHTML = `
-      <p><strong>Formu dolduran:</strong> ${esc(selectedExpense.submitter_name)}</p>
       <p><strong>Tarih:</strong> ${esc(selectedExpense.expense_date)}</p>
+      <p><strong>Fiş No:</strong> ${esc(selectedExpense.receipt_number || "—")}</p>
+      <p><strong>Formu dolduran:</strong> ${esc(selectedExpense.submitter_name)}</p>
       <p><strong>Açıklama:</strong> ${esc(selectedExpense.description)}</p>
-      <p><strong>Fiş no:</strong> ${esc(selectedExpense.receipt_number || "—")}</p>
-      <p><strong>Tutar:</strong> ${money(selectedExpense.amount)}</p>
-      <p><strong>KDV:</strong> ${money(selectedExpense.vat_amount)}</p>
-      <p><strong>Genel toplam:</strong> ${money(Number(selectedExpense.amount) + Number(selectedExpense.vat_amount))}</p>
       <p><strong>Masraf detayı:</strong> ${esc(selectedExpense.detail || "—")}</p>
+      <p><strong>Tutar (KDV dahil):</strong>
+        ${money(Number(selectedExpense.amount) + Number(selectedExpense.vat_amount))}
+      </p>
+      <p><strong>KDV tutarı:</strong> ${money(selectedExpense.vat_amount)}</p>
     `;
 
     $("approver-name").value = profile.full_name || profile.username;
     $("approval-note").value = "";
-
     hasSignature = false;
     $("approval-dialog").showModal();
 
@@ -581,16 +811,8 @@
     });
   }
 
-  function clearSignature() {
-    const canvas = $("signature-canvas");
-    const context = canvas.getContext("2d");
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    hasSignature = false;
-  }
-
   $("signature-canvas").addEventListener("pointerdown", event => {
     event.preventDefault();
-
     const canvas = $("signature-canvas");
     const context = canvas.getContext("2d");
     const point = canvasPoint(event);
@@ -608,7 +830,6 @@
 
     const point = canvasPoint(event);
     const context = $("signature-canvas").getContext("2d");
-
     context.lineTo(point.x, point.y);
     context.stroke();
   });
@@ -632,12 +853,12 @@
     const update = {
       status,
       approver_id: currentUser.id,
-      approver_name: (profile.full_name || profile.username).trim(),
-      approval_note: $("approval-note").value.trim() || null,
-      approved_at: new Date().toISOString(),
+      approver_name: profile.full_name || profile.username,
       approver_signature: status === "approved"
         ? $("signature-canvas").toDataURL("image/png")
         : null,
+      approval_note: $("approval-note").value.trim() || null,
+      approved_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
@@ -674,8 +895,10 @@
     const amount = Number($("amount").value);
     const vatAmount = Number($("vat-amount").value);
 
-    if (!Number.isFinite(amount) || amount < 0 ||
-        !Number.isFinite(vatAmount) || vatAmount < 0) {
+    if (
+      !Number.isFinite(amount) || amount < 0 ||
+      !Number.isFinite(vatAmount) || vatAmount < 0
+    ) {
       tell("Tutar ve KDV sıfırdan küçük olamaz.", true);
       return;
     }
@@ -687,8 +910,8 @@
       seller_id: currentUser.id,
       submitter_name: profile.full_name || profile.username,
       expense_date: $("expense-date").value,
-      description: $("description").value.trim(),
       receipt_number: $("receipt-number").value.trim() || null,
+      description: $("description").value.trim(),
       amount,
       vat_amount: vatAmount,
       detail: $("detail").value.trim() || null,
@@ -705,6 +928,7 @@
     $("expense-form").reset();
     $("expense-date").value = localDate();
     $("submitter-name").value = profile.full_name || profile.username;
+    $("form-submitter-footer").textContent = profile.full_name || profile.username;
     $("vat-amount").value = "0";
     updateFormTotal();
 
@@ -739,9 +963,25 @@
 
   $("refresh").addEventListener("click", loadExpenses);
   $("filter-month").addEventListener("change", loadExpenses);
+
+  $("pdf-report").addEventListener("click", () => {
+    if (!expenses.length) {
+      tell("PDF olarak alınacak kayıt bulunmuyor.", true);
+      return;
+    }
+    window.print();
+  });
+
   $("approve-expense").addEventListener("click", () => decideExpense("approved"));
   $("reject-expense").addEventListener("click", () => decideExpense("rejected"));
-  $("close-dialog").addEventListener("click", () => $("approval-dialog").close());
+
+  $("close-approval").addEventListener("click", () => {
+    $("approval-dialog").close();
+  });
+
+  $("close-detail").addEventListener("click", () => {
+    $("detail-dialog").close();
+  });
 
   $("logout").addEventListener("click", async () => {
     await db.auth.signOut();
