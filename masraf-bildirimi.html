@@ -16,10 +16,7 @@
       font: 14px Arial, sans-serif;
     }
 
-    main {
-      max-width: 1150px;
-      margin: auto;
-    }
+    main { max-width: 1150px; margin: auto; }
 
     section {
       margin: 16px 0;
@@ -155,14 +152,14 @@
     .status-rejected { color: #991b1b; background: #fee2e2; }
 
     .description-cell {
-      min-width: 220px;
+      min-width: 240px;
       line-height: 1.5;
       overflow-wrap: anywhere;
     }
 
     .description-cell button { margin-top: 6px; }
 
-    .form-signatures {
+    .signature-summary {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 16px;
@@ -170,7 +167,7 @@
     }
 
     .signature-box {
-      min-height: 105px;
+      min-height: 95px;
       padding: 14px;
       border: 1px solid #cbd5e1;
       border-radius: 7px;
@@ -221,6 +218,7 @@
     .detail-item {
       padding: 8px 0;
       border-bottom: 1px solid #e2e8f0;
+      overflow-wrap: anywhere;
     }
 
     .detail-item strong { color: #173b2e; }
@@ -240,7 +238,7 @@
     @media (max-width: 650px) {
       body { padding: 10px; }
       section { padding: 15px; }
-      .grid, .totals, .form-signatures, .detail-grid {
+      .grid, .totals, .signature-summary, .detail-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -295,12 +293,15 @@
       }
 
       #expense-report-section th { background: #e9eeeb !important; }
+
       #expense-report-section .totals { margin: 12px 0; }
+
       #expense-report-section .total-card {
         padding: 8px;
         border: 1px solid #777;
         background: #fff !important;
       }
+
       #expense-report-section .total-card strong { font-size: 12pt; }
 
       .print-only { display: block !important; }
@@ -326,6 +327,8 @@
         margin-top: 5px;
         object-fit: contain;
       }
+
+      .print-signature-entry { margin: 8px 0; }
     }
   </style>
 </head>
@@ -381,6 +384,27 @@
           </div>
 
           <div class="field">
+            <label for="payment-type">Ödeme Türü</label>
+            <select id="payment-type" required>
+              <option value="Nakit">Nakit</option>
+              <option value="Kredi kartı">Kredi kartı</option>
+            </select>
+          </div>
+
+          <div class="field hidden" id="card-last4-field">
+            <label for="card-last4">Şirket kartının son 4 hanesi</label>
+            <input
+              id="card-last4"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]{4}"
+              maxlength="4"
+              autocomplete="off"
+              placeholder="Örnek: 1234"
+            >
+          </div>
+
+          <div class="field">
             <label for="amount">Tutar (KDV hariç, TL)</label>
             <input id="amount" type="number" min="0" step="0.01" required>
           </div>
@@ -404,10 +428,10 @@
 
         <p><strong>Toplam (KDV dahil): <span id="form-total">0,00 TL</span></strong></p>
 
-        <div class="form-signatures">
+        <div class="signature-summary">
           <div class="signature-box">
             <strong>Formu dolduran</strong>
-            <span id="form-submitter-footer">Satıcı adı girişte gösterilir.</span>
+            <span id="form-submitter-footer">Satıcı adı girişte doldurulur.</span>
           </div>
           <div class="signature-box">
             <strong>Formu onaylayan</strong>
@@ -490,7 +514,7 @@
   <div class="field">
     <label>Onaylayan imzası — onay için imza çizin</label>
     <canvas id="signature-canvas"></canvas>
-    <p class="note">İmza alanında fareyle veya dokunmatik ekranda parmağınızla imza atın.</p>
+    <p class="note">İmza alanına fareyle veya dokunmatik ekranda parmağınızla imza atın.</p>
     <button type="button" id="clear-signature" class="secondary">İmzayı temizle</button>
   </div>
 
@@ -510,7 +534,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+  const SUPABASE_PUBLISHABLE_KEY = "BURAYA_PUBLISHABLE_KEY";
 
   const db = window.supabase.createClient(
     SUPABASE_URL,
@@ -566,6 +590,14 @@
     $("form-total").textContent = money(amount + vat);
   }
 
+  function updatePaymentTypeFields() {
+    const isCard = $("payment-type").value === "Kredi kartı";
+    $("card-last4-field").classList.toggle("hidden", !isCard);
+    $("card-last4").required = isCard;
+
+    if (!isCard) $("card-last4").value = "";
+  }
+
   async function openApp(user) {
     currentUser = user;
 
@@ -581,19 +613,20 @@
     }
 
     profile = data;
-    const name = data.full_name || data.username;
+    const displayName = data.full_name || data.username;
 
     $("login-section").classList.add("hidden");
     $("app").classList.remove("hidden");
     $("user-label").textContent =
-      `${name} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
+      `${displayName} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
+
     $("filter-month").value = localMonth();
 
     if (data.role === "seller") {
       $("expense-form-section").classList.remove("hidden");
       $("list-title").textContent = "Masraf kayıtlarım";
-      $("submitter-name").value = name;
-      $("form-submitter-footer").textContent = name;
+      $("submitter-name").value = displayName;
+      $("form-submitter-footer").textContent = displayName;
       $("expense-date").value = localDate();
     } else {
       $("expense-form-section").classList.add("hidden");
@@ -651,9 +684,14 @@
           vatSum += vat;
           totalSum += total;
 
-          const action = profile.role === "admin" && expense.status === "pending"
-            ? `<button type="button" class="review-expense" data-id="${esc(expense.id)}">İncele / Onayla</button>`
-            : `<button type="button" class="secondary view-expense" data-id="${esc(expense.id)}">Detay</button>`;
+          const paymentInfo = expense.payment_type === "Kredi kartı"
+            ? `Kredi kartı${expense.card_last4 ? ` · Son 4: ${esc(expense.card_last4)}` : ""}`
+            : "Nakit";
+
+          const actionButton =
+            profile.role === "admin" && expense.status === "pending"
+              ? `<button type="button" class="review-expense" data-id="${esc(expense.id)}">İncele / Onayla</button>`
+              : `<button type="button" class="secondary view-expense" data-id="${esc(expense.id)}">Detay</button>`;
 
           return `
             <tr>
@@ -665,8 +703,9 @@
               <td class="description-cell">
                 <strong>${esc(expense.description)}</strong>
                 <div>${esc(expense.detail || "")}</div>
+                <div><strong>Ödeme:</strong> ${paymentInfo}</div>
                 <span class="status ${statusClass}">${statusText}</span>
-                <div>${action}</div>
+                <div>${actionButton}</div>
               </td>
             </tr>
           `;
@@ -677,8 +716,7 @@
     $("sum-vat").textContent = money(vatSum);
     $("sum-total").textContent = money(totalSum);
 
-    const month = $("filter-month").value;
-    $("print-period").textContent = month || "Tüm dönem";
+    $("print-period").textContent = $("filter-month").value || "Tüm dönem";
     $("print-date").textContent = localDate();
 
     renderPrintSignatures();
@@ -697,13 +735,13 @@
       expenses.map(expense => expense.submitter_name).filter(Boolean)
     )];
 
-    const approvers = [...new Set(
-      expenses.map(expense => expense.approver_name).filter(Boolean)
-    )];
-
-    const signedExpenses = expenses.filter(
-      expense => expense.status === "approved" && expense.approver_signature
+    const approvedExpenses = expenses.filter(
+      expense => expense.status === "approved"
     );
+
+    const approvers = [...new Set(
+      approvedExpenses.map(expense => expense.approver_name).filter(Boolean)
+    )];
 
     $("print-signatures").innerHTML = `
       <div class="print-signature-box">
@@ -711,15 +749,21 @@
         <p>${esc(submitters.join(", ") || "—")}</p>
         <p>İmza: ______________________________</p>
       </div>
+
       <div class="print-signature-box">
         <strong>Formu onaylayan</strong>
         <p>${esc(approvers.join(", ") || "Henüz onaylanmadı")}</p>
-        ${signedExpenses.map(expense => `
-          <div>
-            <small>${esc(expense.approver_name || "")} — ${esc(expense.expense_date)}</small>
-            <img src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">
-          </div>
-        `).join("")}
+        ${approvedExpenses
+          .filter(expense => expense.approver_signature)
+          .map(expense => `
+            <div class="print-signature-entry">
+              <small>
+                ${esc(expense.approver_name || "")} —
+                ${esc(expense.expense_date)}
+              </small>
+              <img src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">
+            </div>
+          `).join("")}
       </div>
     `;
   }
@@ -729,6 +773,10 @@
     if (!expense) return;
 
     const [statusText] = getStatus(expense.status);
+    const paymentInfo = expense.payment_type === "Kredi kartı"
+      ? `Kredi kartı${expense.card_last4 ? ` — son 4 hane: ${esc(expense.card_last4)}` : ""}`
+      : "Nakit";
+
     const signature = expense.approver_signature
       ? `<img class="signature-image" src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">`
       : "—";
@@ -740,6 +788,7 @@
         <div class="detail-item"><strong>Formu dolduran:</strong> ${esc(expense.submitter_name)}</div>
         <div class="detail-item"><strong>Durum:</strong> ${esc(statusText)}</div>
         <div class="detail-item"><strong>Açıklama:</strong> ${esc(expense.description)}</div>
+        <div class="detail-item"><strong>Ödeme türü:</strong> ${paymentInfo}</div>
         <div class="detail-item"><strong>Tutar (KDV hariç):</strong> ${money(expense.amount)}</div>
         <div class="detail-item"><strong>KDV tutarı:</strong> ${money(expense.vat_amount)}</div>
         <div class="detail-item"><strong>Tutar (KDV dahil):</strong> ${money(Number(expense.amount) + Number(expense.vat_amount))}</div>
@@ -788,12 +837,17 @@
     selectedExpense = expenses.find(item => item.id === id);
     if (!selectedExpense) return;
 
+    const paymentInfo = selectedExpense.payment_type === "Kredi kartı"
+      ? `Kredi kartı${selectedExpense.card_last4 ? ` — son 4 hane: ${esc(selectedExpense.card_last4)}` : ""}`
+      : "Nakit";
+
     $("approval-details").innerHTML = `
       <p><strong>Tarih:</strong> ${esc(selectedExpense.expense_date)}</p>
       <p><strong>Fiş No:</strong> ${esc(selectedExpense.receipt_number || "—")}</p>
       <p><strong>Formu dolduran:</strong> ${esc(selectedExpense.submitter_name)}</p>
       <p><strong>Açıklama:</strong> ${esc(selectedExpense.description)}</p>
       <p><strong>Masraf detayı:</strong> ${esc(selectedExpense.detail || "—")}</p>
+      <p><strong>Ödeme türü:</strong> ${paymentInfo}</p>
       <p><strong>Tutar (KDV dahil):</strong>
         ${money(Number(selectedExpense.amount) + Number(selectedExpense.vat_amount))}
       </p>
@@ -811,8 +865,13 @@
     });
   }
 
+  function finishDrawing() {
+    isDrawing = false;
+  }
+
   $("signature-canvas").addEventListener("pointerdown", event => {
     event.preventDefault();
+
     const canvas = $("signature-canvas");
     const context = canvas.getContext("2d");
     const point = canvasPoint(event);
@@ -834,10 +893,6 @@
     context.stroke();
   });
 
-  function finishDrawing() {
-    isDrawing = false;
-  }
-
   $("signature-canvas").addEventListener("pointerup", finishDrawing);
   $("signature-canvas").addEventListener("pointercancel", finishDrawing);
   $("clear-signature").addEventListener("click", clearSignature);
@@ -846,7 +901,7 @@
     if (profile?.role !== "admin" || !selectedExpense) return;
 
     if (status === "approved" && !hasSignature) {
-      tell("Onay için imza alanına imza çizmeniz gerekiyor.", true);
+      tell("Onay için imza alanına imza çizin.", true);
       return;
     }
 
@@ -894,12 +949,19 @@
 
     const amount = Number($("amount").value);
     const vatAmount = Number($("vat-amount").value);
+    const paymentType = $("payment-type").value;
+    const last4 = $("card-last4").value.trim();
 
     if (
       !Number.isFinite(amount) || amount < 0 ||
       !Number.isFinite(vatAmount) || vatAmount < 0
     ) {
       tell("Tutar ve KDV sıfırdan küçük olamaz.", true);
+      return;
+    }
+
+    if (paymentType === "Kredi kartı" && !/^\d{4}$/.test(last4)) {
+      tell("Kredi kartı seçildiğinde kartın son 4 hanesini girin.", true);
       return;
     }
 
@@ -912,6 +974,8 @@
       expense_date: $("expense-date").value,
       receipt_number: $("receipt-number").value.trim() || null,
       description: $("description").value.trim(),
+      payment_type: paymentType,
+      card_last4: paymentType === "Kredi kartı" ? last4 : null,
       amount,
       vat_amount: vatAmount,
       detail: $("detail").value.trim() || null,
@@ -930,12 +994,15 @@
     $("submitter-name").value = profile.full_name || profile.username;
     $("form-submitter-footer").textContent = profile.full_name || profile.username;
     $("vat-amount").value = "0";
+    $("payment-type").value = "Nakit";
+    updatePaymentTypeFields();
     updateFormTotal();
 
-    tell("Masraf bildirimi kaydedildi ve admin onayına gönderildi.");
+    tell("Masraf kaydedildi ve admin onayına gönderildi.");
     await loadExpenses();
   });
 
+  $("payment-type").addEventListener("change", updatePaymentTypeFields);
   $("amount").addEventListener("input", updateFormTotal);
   $("vat-amount").addEventListener("input", updateFormTotal);
 
@@ -966,7 +1033,7 @@
 
   $("pdf-report").addEventListener("click", () => {
     if (!expenses.length) {
-      tell("PDF olarak alınacak kayıt bulunmuyor.", true);
+      tell("PDF olarak alınacak masraf kaydı bulunmuyor.", true);
       return;
     }
     window.print();
@@ -990,6 +1057,7 @@
 
   $("expense-date").value = localDate();
   $("filter-month").value = localMonth();
+  updatePaymentTypeFields();
   updateFormTotal();
 
   db.auth.getSession().then(async ({ data }) => {
