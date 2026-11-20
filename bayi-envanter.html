@@ -3,39 +3,128 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KBR | Bayi Envanter</title>
+  <title>KBR | Bayi Envanter ve Rapor</title>
+
   <style>
     * { box-sizing: border-box; }
-    body { margin:0; padding:20px; font:15px Arial,sans-serif; color:#1f2937; background:#f4f7f5; }
-    main { max-width:1200px; margin:auto; }
-    section { margin:16px 0; padding:20px; background:white; border:1px solid #e2e8f0; border-radius:10px; }
-    h1,h2 { color:#173b2e; }
-    label { display:block; margin:8px 0 5px; font-weight:600; }
-    input,select,textarea,button { padding:10px; border:1px solid #cbd5e1; border-radius:6px; font:inherit; }
-    input,select,textarea { max-width:100%; }
-    button { cursor:pointer; border:0; color:white; background:#17633d; }
-    button.secondary { background:#475569; }
-    .field { margin:10px 0; }
-    .field input,.field select,.field textarea { width:100%; }
-    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-    .scroll { overflow:auto; }
-    table { width:100%; border-collapse:collapse; min-width:850px; }
-    th,td { padding:9px; border-bottom:1px solid #e2e8f0; text-align:left; vertical-align:middle; }
-    td input { width:90px; }
-    .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
-    .toolbar .field { min-width:190px; }
-    #message { margin:12px 0; white-space:pre-wrap; }
-    .hidden { display:none !important; }
-    .note { color:#64748b; font-size:13px; line-height:1.5; }
-    .top-link { color:#17633d; text-decoration:none; }
-    dialog { width:min(900px,95vw); max-height:85vh; border:0; border-radius:10px; padding:20px; }
-    dialog::backdrop { background:#0008; }
-    @media(max-width:700px) {
-      body { padding:10px; }
-      .grid { grid-template-columns:1fr; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      color: #1f2937;
+      background: #f4f7f5;
+      font: 15px Arial, sans-serif;
+    }
+
+    main { max-width: 1200px; margin: auto; }
+
+    section {
+      margin: 16px 0;
+      padding: 20px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+    }
+
+    h1, h2, h3 { color: #173b2e; }
+
+    label {
+      display: block;
+      margin: 8px 0 5px;
+      font-weight: 600;
+    }
+
+    input, select, textarea, button {
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    input, select, textarea { max-width: 100%; }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      color: white;
+      background: #17633d;
+    }
+
+    button.secondary { background: #475569; }
+    button.danger { background: #a83232; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+
+    .field { margin: 10px 0; }
+    .field input, .field select, .field textarea { width: 100%; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: end;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar .field { min-width: 190px; }
+
+    .scroll { overflow: auto; }
+
+    table {
+      width: 100%;
+      min-width: 780px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 9px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    td input { width: 90px; }
+
+    #message {
+      margin: 12px 0;
+      white-space: pre-wrap;
+    }
+
+    .hidden { display: none !important; }
+
+    .note {
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .top-link {
+      color: #17633d;
+      text-decoration: none;
+    }
+
+    dialog {
+      width: min(950px, 96vw);
+      max-height: 85vh;
+      padding: 20px;
+      border: 0;
+      border-radius: 10px;
+    }
+
+    dialog::backdrop { background: #0008; }
+
+    @media (max-width: 700px) {
+      body { padding: 10px; }
+      .grid { grid-template-columns: 1fr; }
+      section { padding: 15px; }
     }
   </style>
 </head>
+
 <body>
 <main>
   <p><a class="top-link" href="./index.html">← Ana sayfa</a></p>
@@ -66,8 +155,8 @@
     <section id="entry-section" class="hidden">
       <h2>Yeni envanter sayımı</h2>
       <p class="note">
-        Paket, koli ve palet miktarlarını ayrı girin. Toplam adet otomatik hesaplanır:
-        paket × paket içi + koli × koli içi + palet × paletteki koli × koli içi.
+        Paket, koli ve palet miktarlarını ayrı girin. Toplam adet şu şekilde hesaplanır:
+        paket × paket içi adet + koli × koli içi adet + palet × paletteki koli × koli içi adet.
       </p>
 
       <form id="inventory-form">
@@ -78,10 +167,12 @@
               <option value="">Bayi seçin</option>
             </select>
           </div>
+
           <div class="field">
             <label for="inventory-date">Sayım tarihi</label>
             <input id="inventory-date" type="date" required>
           </div>
+
           <div class="field">
             <label for="notes">Not</label>
             <input id="notes" type="text" maxlength="500" placeholder="İsteğe bağlı">
@@ -111,49 +202,48 @@
     </section>
 
     <section>
-      <h2>Envanter kayıtları ve rapor</h2>
+      <h2>Envanter kayıtları ve aylık rapor</h2>
+
       <div class="toolbar">
         <div class="field">
-          <label for="filter-month">Ay filtresi</label>
+          <label for="filter-month">Rapor ayı</label>
           <input id="filter-month" type="month">
         </div>
+
         <div class="field">
           <label for="filter-dealer">Bayi filtresi</label>
           <select id="filter-dealer">
-            <option value="">Tüm yetkili bayiler</option>
+            <option value="">Tüm bayiler</option>
           </select>
         </div>
+
         <button type="button" id="refresh" class="secondary">Raporu yenile</button>
-        <h3>Aylık stok karşılaştırması</h3>
-<p class="note">
-  Seçilen ayın her bayi için son sayımı, önceki ayın son sayımıyla karşılaştırılır.
-  Fark adet olarak gösterilir.
-</p>
-
-<p>
-  <button type="button" id="export-report" class="secondary">
-    Raporu CSV indir
-  </button>
-</p>
-
-<div class="scroll">
-  <table>
-    <thead>
-      <tr>
-        <th>Bayi</th>
-        <th>Ürün kodu</th>
-        <th>Ürün</th>
-        <th>Önceki ay toplam adet</th>
-        <th>Seçilen ay toplam adet</th>
-        <th>Değişim</th>
-      </tr>
-    </thead>
-    <tbody id="report-body"></tbody>
-  </table>
-</div>
-
+        <button type="button" id="export-report" class="secondary">CSV indir</button>
       </div>
 
+      <h3>Aylık stok karşılaştırması</h3>
+      <p class="note">
+        Her bayi için seçilen ayın en son sayımı, önceki ayın en son sayımıyla
+        karşılaştırılır. Değişim adet olarak gösterilir; farklı sayımlar toplanmaz.
+      </p>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Bayi</th>
+              <th>Ürün kodu</th>
+              <th>Ürün</th>
+              <th>Önceki ay toplam adet</th>
+              <th>Seçilen ay toplam adet</th>
+              <th>Değişim</th>
+            </tr>
+          </thead>
+          <tbody id="report-body"></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:28px">Sayım kayıtları</h3>
       <div class="scroll">
         <table>
           <thead>
@@ -161,7 +251,7 @@
               <th>Tarih</th>
               <th>Bayi</th>
               <th>Durum</th>
-              <th>Kaydeden</th>
+              <th>Not</th>
               <th>İşlem</th>
             </tr>
           </thead>
@@ -182,22 +272,32 @@
 <script>
   const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
 
   const $ = id => document.getElementById(id);
+
   let currentUser = null;
   let profile = null;
   let dealers = [];
   let products = [];
   let counts = [];
+  let reportRows = [];
 
-  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
-  }[c]));
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[character]));
 
-  function tell(text, error = false) {
+  function tell(text, isError = false) {
     $("message").textContent = text;
-    $("message").style.color = error ? "#a83232" : "#17633d";
+    $("message").style.color = isError ? "#a83232" : "#17633d";
   }
 
   function todayLocal() {
@@ -206,20 +306,45 @@
     return local.toISOString().slice(0, 10);
   }
 
+  function currentMonthLocal() {
+    return todayLocal().slice(0, 7);
+  }
+
+  function monthStart(yyyyMm) {
+    return `${yyyyMm}-01`;
+  }
+
+  function nextMonth(yyyyMm) {
+    const [year, month] = yyyyMm.split("-").map(Number);
+    const date = new Date(year, month, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+  }
+
+  function previousMonthStart(yyyyMm) {
+    const [year, month] = yyyyMm.split("-").map(Number);
+    const date = new Date(year, month - 2, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+  }
+
   function productTotal(product, packageQty, cartonQty, palletQty) {
-    const values = [
-      Number(packageQty || 0),
-      Number(cartonQty || 0),
-      Number(palletQty || 0)
-    ];
+    const packages = Number(packageQty || 0);
+    const cartons = Number(cartonQty || 0);
+    const pallets = Number(palletQty || 0);
 
-    if (values[0] && product.pack_inner == null) return null;
-    if (values[1] && product.carton_inner == null) return null;
-    if (values[2] && (product.pallet_inner == null || product.carton_inner == null)) return null;
+    if (packages > 0 && product.pack_inner == null) return null;
+    if (cartons > 0 && product.carton_inner == null) return null;
 
-    return values[0] * Number(product.pack_inner || 0)
-      + values[1] * Number(product.carton_inner || 0)
-      + values[2] * Number(product.pallet_inner || 0) * Number(product.carton_inner || 0);
+    if (
+      pallets > 0 &&
+      (product.pallet_inner == null || product.carton_inner == null)
+    ) {
+      return null;
+    }
+
+    return packages * Number(product.pack_inner || 0)
+      + cartons * Number(product.carton_inner || 0)
+      + pallets * Number(product.pallet_inner || 0)
+        * Number(product.carton_inner || 0);
   }
 
   async function openApp(user) {
@@ -233,22 +358,31 @@
     if (error) throw error;
     if (!data.active) throw new Error("Kullanıcı hesabı devre dışı.");
 
+    if (!["admin", "seller"].includes(data.role)) {
+      throw new Error("Bu sayfaya erişim yetkiniz yok.");
+    }
+
     profile = data;
     $("login-section").classList.add("hidden");
     $("app").classList.remove("hidden");
-    $("user-label").textContent = `${data.full_name || data.username} — ${data.role}`;
+    $("user-label").textContent =
+      `${data.full_name || data.username} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
 
     if (data.role === "seller") {
       $("entry-section").classList.remove("hidden");
       await loadSellerDealers();
       await loadProducts();
-    } else if (data.role === "admin") {
-      await loadAdminDealers();
     } else {
-      throw new Error("Bu sayfaya erişim yetkiniz yok.");
+      $("entry-section").classList.add("hidden");
+      await loadAdminDealers();
+    }
+
+    if (!$("filter-month").value) {
+      $("filter-month").value = currentMonthLocal();
     }
 
     await loadCounts();
+    await loadReport();
   }
 
   async function loadSellerDealers() {
@@ -258,17 +392,20 @@
       .order("name");
 
     if (error) throw error;
+
     dealers = data || [];
 
     $("dealer-select").innerHTML =
       '<option value="">Bayi seçin</option>' +
-      dealers.map(d =>
-        `<option value="${d.id}">${esc(d.dealer_code ? d.dealer_code + " — " : "")}${esc(d.name)}</option>`
+      dealers.map(dealer =>
+        `<option value="${dealer.id}">${esc(dealer.dealer_code ? dealer.dealer_code + " — " : "")}${esc(dealer.name)}</option>`
       ).join("");
 
     $("filter-dealer").innerHTML =
       '<option value="">Tüm yetkili bayiler</option>' +
-      dealers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+      dealers.map(dealer =>
+        `<option value="${dealer.id}">${esc(dealer.name)}</option>`
+      ).join("");
   }
 
   async function loadAdminDealers() {
@@ -277,11 +414,14 @@
       .order("name");
 
     if (error) throw error;
+
     dealers = data || [];
 
     $("filter-dealer").innerHTML =
       '<option value="">Tüm bayiler</option>' +
-      dealers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+      dealers.map(dealer =>
+        `<option value="${dealer.id}">${esc(dealer.name)}</option>`
+      ).join("");
   }
 
   async function loadProducts() {
@@ -291,12 +431,13 @@
       .order("product_code");
 
     if (error) throw error;
+
     products = data || [];
 
-    $("product-rows").innerHTML = products.map(p => `
-      <tr data-product-id="${p.id}">
-        <td>${esc(p.product_code)}</td>
-        <td>${esc(p.description)}</td>
+    $("product-rows").innerHTML = products.map(product => `
+      <tr data-product-id="${product.id}">
+        <td>${esc(product.product_code)}</td>
+        <td>${esc(product.description)}</td>
         <td><input class="package-qty" type="number" min="0" step="1" value="0" aria-label="Paket miktarı"></td>
         <td><input class="carton-qty" type="number" min="0" step="1" value="0" aria-label="Koli miktarı"></td>
         <td><input class="pallet-qty" type="number" min="0" step="1" value="0" aria-label="Palet miktarı"></td>
@@ -311,7 +452,10 @@
 
   function updateRowTotal(event) {
     const row = event.target.closest("tr");
-    const product = products.find(p => String(p.id) === row.dataset.productId);
+    const product = products.find(
+      item => String(item.id) === row.dataset.productId
+    );
+
     if (!product) return;
 
     const total = productTotal(
@@ -322,33 +466,13 @@
     );
 
     row.querySelector(".total-units").textContent =
-      total === null ? "Ambalaj bilgisi eksik" : total.toLocaleString("tr-TR");
+      total === null
+        ? "Ambalaj bilgisi eksik"
+        : total.toLocaleString("tr-TR");
   }
 
-  $("dealer-select").addEventListener("change", async () => {
-    const dealerId = $("dealer-select").value;
-    if (!dealerId || !profile) return;
-
-    const { data, error } = await db.from("inventory_counts")
-      .select("id")
-      .eq("dealer_id", dealerId)
-      .eq("inventory_date", $("inventory-date").value)
-      .eq("status", "submitted")
-      .limit(1);
-
-    if (error) {
-      tell("Mevcut sayım kontrol edilemedi: " + error.message, true);
-      return;
-    }
-
-    if (data?.length) {
-      tell("Bu bayi için seçilen tarihte gönderilmiş bir sayım zaten var.", true);
-    } else {
-      tell("");
-    }
-  });
-
   $("inventory-date").value = todayLocal();
+  $("filter-month").value = currentMonthLocal();
 
   $("inventory-form").addEventListener("submit", async event => {
     event.preventDefault();
@@ -359,61 +483,62 @@
     }
 
     const dealerId = Number($("dealer-select").value);
-    if (!dealerId) {
-      tell("Bayi seçin.", true);
+    const inventoryDate = $("inventory-date").value;
+
+    if (!dealerId || !inventoryDate) {
+      tell("Bayi ve sayım tarihi seçin.", true);
       return;
     }
 
-    const existing = await db.from("inventory_counts")
-      .select("id")
-      .eq("dealer_id", dealerId)
-      .eq("inventory_date", $("inventory-date").value)
-      .eq("status", "submitted")
-      .limit(1);
+    const entries = [...document.querySelectorAll("#product-rows tr")]
+      .map(row => {
+        const product = products.find(
+          item => String(item.id) === row.dataset.productId
+        );
 
-    if (existing.error) {
-      tell("Sayım kontrolü başarısız: " + existing.error.message, true);
-      return;
-    }
-
-    if (existing.data?.length) {
-      tell("Bu bayi için bu tarihte gönderilmiş sayım zaten var.", true);
-      return;
-    }
-
-    const rows = [...document.querySelectorAll("#product-rows tr")];
-
-    const entries = rows.map(row => {
-      const product = products.find(p => String(p.id) === row.dataset.productId);
-
-      return {
-        product,
-        package_qty: Number(row.querySelector(".package-qty").value || 0),
-        carton_qty: Number(row.querySelector(".carton-qty").value || 0),
-        pallet_qty: Number(row.querySelector(".pallet-qty").value || 0)
-      };
-    }).filter(x =>
-      x.package_qty > 0 || x.carton_qty > 0 || x.pallet_qty > 0
-    );
+        return {
+          product,
+          package_qty: Number(row.querySelector(".package-qty").value || 0),
+          carton_qty: Number(row.querySelector(".carton-qty").value || 0),
+          pallet_qty: Number(row.querySelector(".pallet-qty").value || 0)
+        };
+      })
+      .filter(entry =>
+        entry.package_qty > 0 ||
+        entry.carton_qty > 0 ||
+        entry.pallet_qty > 0
+      );
 
     if (!entries.length) {
       tell("En az bir ürün için paket, koli veya palet miktarı girin.", true);
       return;
     }
 
-    const invalid = entries.find(x =>
-      (x.package_qty > 0 && x.product.pack_inner == null) ||
-      (x.carton_qty > 0 && x.product.carton_inner == null) ||
-      (x.pallet_qty > 0 && (x.product.pallet_inner == null || x.product.carton_inner == null))
+    const invalidEntry = entries.find(entry =>
+      !entry.product ||
+      (entry.package_qty > 0 && entry.product.pack_inner == null) ||
+      (entry.carton_qty > 0 && entry.product.carton_inner == null) ||
+      (
+        entry.pallet_qty > 0 &&
+        (
+          entry.product.pallet_inner == null ||
+          entry.product.carton_inner == null
+        )
+      )
     );
 
-    if (invalid) {
-      tell(`“${invalid.product.product_code}” ürünü için gerekli paket/koli/palet dönüşüm bilgileri eksik. Önce ürün kartını düzeltin.`, true);
+    if (invalidEntry) {
+      tell(
+        `“${invalidEntry.product?.product_code || "Ürün"}” için gereken paket/koli/palet dönüşüm bilgisi eksik. Önce ürün kartındaki ambalaj değerlerini tamamlayın.`,
+        true
+      );
       return;
     }
 
     $("save-count").disabled = true;
     tell("Envanter kaydediliyor…");
+
+    let createdCountId = null;
 
     try {
       const { data: count, error: countError } = await db
@@ -421,7 +546,7 @@
         .insert({
           dealer_id: dealerId,
           seller_id: currentUser.id,
-          inventory_date: $("inventory-date").value,
+          inventory_date: inventoryDate,
           status: "draft",
           notes: $("notes").value.trim() || null
         })
@@ -429,19 +554,24 @@
         .single();
 
       if (countError) throw countError;
+      createdCountId = count.id;
 
-      const itemRows = entries.map(x => ({
+      const itemRows = entries.map(entry => ({
         inventory_count_id: count.id,
-        product_id: x.product.id,
-        package_qty: x.package_qty,
-        carton_qty: x.carton_qty,
-        pallet_qty: x.pallet_qty
+        product_id: entry.product.id,
+        package_qty: entry.package_qty,
+        carton_qty: entry.carton_qty,
+        pallet_qty: entry.pallet_qty
       }));
 
-      const { error: itemError } = await db.from("inventory_items").insert(itemRows);
+      const { error: itemError } = await db
+        .from("inventory_items")
+        .insert(itemRows);
+
       if (itemError) throw itemError;
 
-      const { error: submitError } = await db.from("inventory_counts")
+      const { error: submitError } = await db
+        .from("inventory_counts")
         .update({
           status: "submitted",
           submitted_at: new Date().toISOString(),
@@ -453,17 +583,32 @@
 
       $("inventory-form").reset();
       $("inventory-date").value = todayLocal();
+
       document.querySelectorAll("#product-rows input").forEach(input => {
         input.value = "0";
       });
+
       document.querySelectorAll(".total-units").forEach(cell => {
         cell.textContent = "0";
       });
 
       tell("Envanter sayımı kaydedildi.");
       await loadCounts();
+      await loadReport();
     } catch (error) {
-      tell("Envanter kaydedilemedi: " + error.message, true);
+      tell(
+        "Envanter kaydedilemedi: " +
+        (error instanceof Error ? error.message : "Bilinmeyen hata."),
+        true
+      );
+
+      // Ürün satırları kaydedilemediyse boş taslak bırakmamaya çalış.
+      if (createdCountId) {
+        await db.from("inventory_counts")
+          .delete()
+          .eq("id", createdCountId)
+          .eq("status", "draft");
+      }
     } finally {
       $("save-count").disabled = false;
     }
@@ -474,12 +619,13 @@
 
     let query = db.from("inventory_counts")
       .select("*")
-      .order("inventory_date", { ascending: false });
+      .order("inventory_date", { ascending: false })
+      .order("created_at", { ascending: false });
 
     const month = $("filter-month").value;
     if (month) {
       query = query
-        .gte("inventory_date", `${month}-01`)
+        .gte("inventory_date", monthStart(month))
         .lt("inventory_date", nextMonth(month));
     }
 
@@ -487,38 +633,200 @@
     if (dealerId) query = query.eq("dealer_id", Number(dealerId));
 
     const { data, error } = await query;
+
     if (error) {
-      tell("Envanter raporu yüklenemedi: " + error.message, true);
+      tell("Envanter kayıtları yüklenemedi: " + error.message, true);
       return;
     }
 
     counts = data || [];
+    const dealerNames = new Map(
+      dealers.map(dealer => [Number(dealer.id), dealer.name])
+    );
 
-    const dealerMap = new Map(dealers.map(d => [Number(d.id), d.name]));
-
-    $("counts-body").innerHTML = counts.map(count => `
-      <tr>
-        <td>${esc(count.inventory_date)}</td>
-        <td>${esc(dealerMap.get(Number(count.dealer_id)) || "Bayi")}</td>
-        <td>${count.status === "submitted" ? "Gönderildi" : "Taslak"}</td>
-        <td>${count.seller_id === currentUser.id ? "Siz" : "Satıcı"}</td>
-        <td>
-          <button type="button" class="secondary detail-button" data-id="${esc(count.id)}">
-            Ürünleri gör
-          </button>
-        </td>
-      </tr>
-    `).join("");
+    $("counts-body").innerHTML = counts.length
+      ? counts.map(count => `
+          <tr>
+            <td>${esc(count.inventory_date)}</td>
+            <td>${esc(dealerNames.get(Number(count.dealer_id)) || "Bayi")}</td>
+            <td>${count.status === "submitted" ? "Gönderildi" : "Taslak"}</td>
+            <td>${esc(count.notes || "")}</td>
+            <td>
+              <button type="button" class="secondary detail-button"
+                      data-id="${esc(count.id)}">Ürünleri gör</button>
+              ${profile.role === "admin"
+                ? `<button type="button" class="danger delete-count-button"
+                           data-id="${esc(count.id)}">Sil</button>`
+                : ""}
+            </td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="5">Bu filtrelerde envanter kaydı bulunamadı.</td></tr>`;
 
     document.querySelectorAll(".detail-button").forEach(button => {
-      button.addEventListener("click", () => showCountDetails(button.dataset.id));
+      button.addEventListener("click", () =>
+        showCountDetails(button.dataset.id)
+      );
+    });
+
+    document.querySelectorAll(".delete-count-button").forEach(button => {
+      button.addEventListener("click", async () => {
+        if (profile.role !== "admin") return;
+
+        const confirmed = confirm(
+          "Bu envanter sayımı ve ürün satırları kalıcı olarak silinsin mi?"
+        );
+
+        if (!confirmed) return;
+
+        const { error } = await db.from("inventory_counts")
+          .delete()
+          .eq("id", button.dataset.id);
+
+        if (error) {
+          tell("Sayım silinemedi: " + error.message, true);
+          return;
+        }
+
+        tell("Envanter sayımı silindi.");
+        await loadCounts();
+        await loadReport();
+      });
     });
   }
 
-  function nextMonth(yyyyMm) {
-    const [year, month] = yyyyMm.split("-").map(Number);
-    const date = new Date(year, month, 1);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`;
+  async function getLatestMonthlySnapshot(startDate, endDate, dealerFilter) {
+    let query = db.from("inventory_counts")
+      .select("id, dealer_id, inventory_date, created_at")
+      .eq("status", "submitted")
+      .gte("inventory_date", startDate)
+      .lt("inventory_date", endDate)
+      .order("inventory_date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (dealerFilter) {
+      query = query.eq("dealer_id", Number(dealerFilter));
+    }
+
+    const { data: monthlyCounts, error } = await query;
+    if (error) throw error;
+
+    // Her bayi için ilgili dönemdeki en son sayımı seç.
+    const latestByDealer = new Map();
+
+    for (const count of monthlyCounts || []) {
+      const dealerId = Number(count.dealer_id);
+      if (!latestByDealer.has(dealerId)) {
+        latestByDealer.set(dealerId, count);
+      }
+    }
+
+    const selectedCounts = [...latestByDealer.values()];
+    if (!selectedCounts.length) return new Map();
+
+    const countIds = selectedCounts.map(count => count.id);
+    const countToDealer = new Map(
+      selectedCounts.map(count => [count.id, Number(count.dealer_id)])
+    );
+
+    const { data: items, error: itemsError } = await db
+      .from("inventory_items")
+      .select("inventory_count_id, product_id, product_code, description, total_units")
+      .in("inventory_count_id", countIds);
+
+    if (itemsError) throw itemsError;
+
+    const snapshot = new Map();
+
+    for (const item of items || []) {
+      const dealerId = countToDealer.get(item.inventory_count_id);
+      if (dealerId == null) continue;
+
+      const key = `${dealerId}|${item.product_id}`;
+
+      snapshot.set(key, {
+        dealerId,
+        productId: item.product_id,
+        productCode: item.product_code,
+        description: item.description,
+        units: Number(item.total_units || 0)
+      });
+    }
+
+    return snapshot;
+  }
+
+  async function loadReport() {
+    if (!profile) return;
+
+    const selectedMonth = $("filter-month").value;
+    if (!selectedMonth) {
+      $("report-body").innerHTML =
+        `<tr><td colspan="6">Rapor için ay seçin.</td></tr>`;
+      reportRows = [];
+      return;
+    }
+
+    const currentStart = monthStart(selectedMonth);
+    const currentEnd = nextMonth(selectedMonth);
+    const previousStart = previousMonthStart(selectedMonth);
+    const dealerFilter = $("filter-dealer").value;
+
+    try {
+      const [previousSnapshot, currentSnapshot] = await Promise.all([
+        getLatestMonthlySnapshot(previousStart, currentStart, dealerFilter),
+        getLatestMonthlySnapshot(currentStart, currentEnd, dealerFilter)
+      ]);
+
+      const keys = new Set([
+        ...previousSnapshot.keys(),
+        ...currentSnapshot.keys()
+      ]);
+
+      const dealerNames = new Map(
+        dealers.map(dealer => [Number(dealer.id), dealer.name])
+      );
+
+      reportRows = [...keys].map(key => {
+        const previous = previousSnapshot.get(key);
+        const current = currentSnapshot.get(key);
+        const sample = current || previous;
+
+        const previousUnits = previous?.units || 0;
+        const currentUnits = current?.units || 0;
+
+        return {
+          dealer: dealerNames.get(sample.dealerId) || "Bayi",
+          productCode: sample.productCode,
+          description: sample.description,
+          previousUnits,
+          currentUnits,
+          difference: currentUnits - previousUnits
+        };
+      }).sort((a, b) =>
+        a.dealer.localeCompare(b.dealer, "tr") ||
+        a.productCode.localeCompare(b.productCode, "tr")
+      );
+
+      $("report-body").innerHTML = reportRows.length
+        ? reportRows.map(row => `
+            <tr>
+              <td>${esc(row.dealer)}</td>
+              <td>${esc(row.productCode)}</td>
+              <td>${esc(row.description)}</td>
+              <td>${row.previousUnits.toLocaleString("tr-TR")}</td>
+              <td>${row.currentUnits.toLocaleString("tr-TR")}</td>
+              <td>${row.difference > 0 ? "+" : ""}${row.difference.toLocaleString("tr-TR")}</td>
+            </tr>
+          `).join("")
+        : `<tr><td colspan="6">Bu dönem için karşılaştırılabilir sayım bulunamadı.</td></tr>`;
+    } catch (error) {
+      tell(
+        "Aylık rapor yüklenemedi: " +
+        (error instanceof Error ? error.message : "Bilinmeyen hata."),
+        true
+      );
+    }
   }
 
   async function showCountDetails(countId) {
@@ -537,7 +845,12 @@
         <table>
           <thead>
             <tr>
-              <th>Kod</th><th>Ürün</th><th>Paket</th><th>Koli</th><th>Palet</th><th>Toplam adet</th>
+              <th>Kod</th>
+              <th>Ürün</th>
+              <th>Paket</th>
+              <th>Koli</th>
+              <th>Palet</th>
+              <th>Toplam adet</th>
             </tr>
           </thead>
           <tbody>
@@ -548,7 +861,11 @@
                 <td>${Number(item.package_qty || 0).toLocaleString("tr-TR")}</td>
                 <td>${Number(item.carton_qty || 0).toLocaleString("tr-TR")}</td>
                 <td>${Number(item.pallet_qty || 0).toLocaleString("tr-TR")}</td>
-                <td>${item.total_units == null ? "Dönüşüm eksik" : Number(item.total_units).toLocaleString("tr-TR")}</td>
+                <td>
+                  ${item.total_units == null
+                    ? "Ambalaj dönüşümü eksik"
+                    : Number(item.total_units).toLocaleString("tr-TR")}
+                </td>
               </tr>
             `).join("")}
           </tbody>
@@ -557,6 +874,48 @@
     `;
 
     $("detail-dialog").showModal();
+  }
+
+  function downloadCsv() {
+    if (!reportRows.length) {
+      tell("İndirilecek rapor verisi yok.", true);
+      return;
+    }
+
+    const header = [
+      "Bayi",
+      "Ürün Kodu",
+      "Ürün",
+      "Önceki Ay Toplam Adet",
+      "Seçilen Ay Toplam Adet",
+      "Değişim"
+    ];
+
+    const rows = reportRows.map(row => [
+      row.dealer,
+      row.productCode,
+      row.description,
+      row.previousUnits,
+      row.currentUnits,
+      row.difference
+    ]);
+
+    const csv = [header, ...rows]
+      .map(row => row.map(value =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`
+      ).join(";"))
+      .join("\r\n");
+
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `KBR-envanter-raporu-${$("filter-month").value}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   $("login-form").addEventListener("submit", async event => {
@@ -577,7 +936,11 @@
       await openApp(data.user);
       tell("Giriş başarılı.");
     } catch (error) {
-      tell("Sayfa açılamadı: " + error.message, true);
+      tell(
+        "Sayfa açılamadı: " +
+        (error instanceof Error ? error.message : "Bilinmeyen hata."),
+        true
+      );
     }
   });
 
@@ -586,17 +949,35 @@
     location.reload();
   });
 
-  $("refresh").addEventListener("click", loadCounts);
-  $("filter-month").addEventListener("change", loadCounts);
-  $("filter-dealer").addEventListener("change", loadCounts);
+  $("refresh").addEventListener("click", async () => {
+    await loadCounts();
+    await loadReport();
+  });
+
+  $("filter-month").addEventListener("change", async () => {
+    await loadCounts();
+    await loadReport();
+  });
+
+  $("filter-dealer").addEventListener("change", async () => {
+    await loadCounts();
+    await loadReport();
+  });
+
+  $("export-report").addEventListener("click", downloadCsv);
   $("close-detail").addEventListener("click", () => $("detail-dialog").close());
 
   db.auth.getSession().then(async ({ data }) => {
     if (!data.session) return;
+
     try {
       await openApp(data.session.user);
     } catch (error) {
-      tell("Oturum açılamadı: " + error.message, true);
+      tell(
+        "Oturum açılamadı: " +
+        (error instanceof Error ? error.message : "Bilinmeyen hata."),
+        true
+      );
     }
   });
 </script>
