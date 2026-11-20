@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KBR | Bayi Satış Raporu</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin:0; padding:20px; font:15px Arial,sans-serif; color:#1f2937; background:#f4f7f5; }
+    main { max-width:1200px; margin:auto; }
+    section { margin:16px 0; padding:20px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; }
+    h1,h2,h3 { color:#173b2e; }
+    label { display:block; margin:8px 0 5px; font-weight:600; }
+    input,select,button { padding:10px; border:1px solid #cbd5e1; border-radius:6px; font:inherit; }
+    input,select { max-width:100%; }
+    button { cursor:pointer; border:0; color:#fff; background:#17633d; }
+    button.secondary { background:#475569; }
+    button.danger { background:#a83232; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    .field { margin:10px 0; }
+    .field input,.field select { width:100%; }
+    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .toolbar { display:flex; align-items:end; flex-wrap:wrap; gap:10px; }
+    .toolbar .field { min-width:190px; }
+    .scroll { overflow:auto; }
+    table { width:100%; min-width:780px; border-collapse:collapse; }
+    th,td { padding:9px; border-bottom:1px solid #e2e8f0; text-align:left; vertical-align:middle; }
+    td input { width:90px; }
+    #message { margin:12px 0; white-space:pre-wrap; }
+    .hidden { display:none !important; }
+    .note { color:#64748b; font-size:13px; line-height:1.55; }
+    .top-link { color:#17633d; text-decoration:none; }
+    dialog { width:min(950px,96vw); max-height:85vh; padding:20px; border:0; border-radius:10px; }
+    dialog::backdrop { background:#0008; }
+    @media(max-width:700px) {
+      body { padding:10px; }
+      section { padding:15px; }
+      .grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <p><a class="top-link" href="./index.html">← Ana sayfa</a></p>
+  <h1>KBR Bayi Satış</h1>
+  <div id="message" role="status"></div>
+
+  <section id="login-section">
+    <h2>Giriş</h2>
+    <form id="login-form">
+      <div class="field">
+        <label for="email">E-posta</label>
+        <input id="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Şifre</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Giriş yap</button>
+    </form>
+  </section>
+
+  <div id="app" class="hidden">
+    <p>
+      <span id="user-label"></span>
+      <button type="button" id="logout" class="secondary">Çıkış yap</button>
+    </p>
+
+    <section id="entry-section" class="hidden">
+      <h2>Aylık bayi satış girişi</h2>
+      <p class="note">
+        Her bayi için ayda bir rapor girilir. Ürün miktarlarını paket, koli ve palet
+        olarak kaydedin. Toplam adet ambalaj bilgilerine göre hesaplanır.
+      </p>
+
+      <form id="sales-form">
+        <div class="grid">
+          <div class="field">
+            <label for="dealer-select">Yetkili bayi</label>
+            <select id="dealer-select" required>
+              <option value="">Bayi seçin</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sales-month">Satış ayı</label>
+            <input id="sales-month" type="month" required>
+          </div>
+          <div class="field">
+            <label for="visit-date">Bayi ziyaret tarihi</label>
+            <input id="visit-date" type="date" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="notes">Not</label>
+          <input id="notes" maxlength="500" placeholder="İsteğe bağlı">
+        </div>
+
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Ürün kodu</th>
+                <th>Açıklama</th>
+                <th>Paket satışı</th>
+                <th>Koli satışı</th>
+                <th>Palet satışı</th>
+                <th>Toplam adet</th>
+              </tr>
+            </thead>
+            <tbody id="product-rows"></tbody>
+          </table>
+        </div>
+
+        <p style="margin-top:16px">
+          <button type="submit" id="save-report">Satış raporunu kaydet</button>
+        </p>
+      </form>
+    </section>
+
+    <section>
+      <h2>Aylık satış raporları</h2>
+
+      <div class="toolbar">
+        <div class="field">
+          <label for="filter-month">Ay</label>
+          <input id="filter-month" type="month">
+        </div>
+        <div class="field">
+          <label for="filter-dealer">Bayi</label>
+          <select id="filter-dealer">
+            <option value="">Tüm bayiler</option>
+          </select>
+        </div>
+        <button type="button" id="refresh" class="secondary">Raporu yenile</button>
+        <button type="button" id="export-csv" class="secondary">Ürün raporunu CSV indir</button>
+      </div>
+
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Satış ayı</th>
+              <th>Ziyaret tarihi</th>
+              <th>Bayi</th>
+              <th>Durum</th>
+              <th>Not</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody id="reports-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+
+<dialog id="detail-dialog">
+  <h2>Satış raporu ürünleri</h2>
+  <div id="detail-content"></div>
+  <button type="button" id="close-detail" class="secondary">Kapat</button>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://dqejxcvacocisdgcwwdw.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KUa4pP3ANnd9C2qfcZ5TTA_2n_pilbz";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+  const $ = id => document.getElementById(id);
+  let currentUser = null;
+  let profile = null;
+  let dealers = [];
+  let products = [];
+  let reports = [];
+  let reportUsers = [];
+
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+
+  function tell(text, isError = false) {
+    $("message").textContent = text;
+    $("message").style.color = isError ? "#a83232" : "#17633d";
+  }
+
+  function localDate() {
+    const now = new Date();
+    return new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 10);
+  }
+
+  function currentMonth() {
+    return localDate().slice(0, 7);
+  }
+
+  function monthDate(month) {
+    return `${month}-01`;
+  }
+
+  function totalUnits(product, packages, cartons, pallets) {
+    packages = Number(packages || 0);
+    cartons = Number(cartons || 0);
+    pallets = Number(pallets || 0);
+
+    if (packages > 0 && product.pack_inner == null) return null;
+    if (cartons > 0 && product.carton_inner == null) return null;
+    if (pallets > 0 &&
+        (product.pallet_inner == null || product.carton_inner == null)) return null;
+
+    return packages * Number(product.pack_inner || 0)
+      + cartons * Number(product.carton_inner || 0)
+      + pallets * Number(product.pallet_inner || 0)
+        * Number(product.carton_inner || 0);
+  }
+
+  async function openApp(user) {
+    currentUser = user;
+
+    const { data, error } = await db.from("profiles")
+      .select("username, full_name, role, active")
+      .eq("id", user.id)
+      .single();
+
+    if (error) throw error;
+    if (!data.active) throw new Error("Kullanıcı hesabı devre dışı.");
+    if (!["admin", "seller"].includes(data.role)) {
+      throw new Error("Bu sayfaya erişim yetkiniz yok.");
+    }
+
+    profile = data;
+    $("login-section").classList.add("hidden");
+    $("app").classList.remove("hidden");
+    $("user-label").textContent =
+      `${data.full_name || data.username} — ${data.role === "admin" ? "Admin" : "Satıcı"}`;
+
+    $("sales-month").value = currentMonth();
+    $("filter-month").value = currentMonth();
+    $("visit-date").value = localDate();
+
+    if (data.role === "seller") {
+      $("entry-section").classList.remove("hidden");
+      await loadSellerDealers();
+      await loadProducts();
+    } else {
+      $("entry-section").classList.add("hidden");
+      await loadAdminDealers();
+      await loadReportUsers();
+    }
+
+    await loadReports();
+  }
+
+  async function loadSellerDealers() {
+    const { data, error } = await db.from("dealers")
+      .select("id, name, dealer_code")
+      .eq("active", true)
+      .order("name");
+
+    if (error) throw error;
+    dealers = data || [];
+
+    $("dealer-select").innerHTML =
+      '<option value="">Bayi seçin</option>' +
+      dealers.map(d =>
+        `<option value="${d.id}">${esc(d.dealer_code ? d.dealer_code + " — " : "")}${esc(d.name)}</option>`
+      ).join("");
+
+    $("filter-dealer").innerHTML =
+      '<option value="">Tüm yetkili bayiler</option>' +
+      dealers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+  }
+
+  async function loadAdminDealers() {
+    const { data, error } = await db.from("dealers")
+      .select("id, name, dealer_code")
+      .order("name");
+
+    if (error) throw error;
+    dealers = data || [];
+
+    $("filter-dealer").innerHTML =
+      '<option value="">Tüm bayiler</option>' +
+      dealers.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+  }
+
+  async function loadReportUsers() {
+    const { data, error } = await db.from("profiles")
+      .select("id, username, full_name");
+
+    if (error) throw error;
+    reportUsers = data || [];
+  }
+
+  async function loadProducts() {
+    const { data, error } = await db.from("products")
+      .select("id, product_code, description, pack_inner, carton_inner, pallet_inner, active")
+      .eq("active", true)
+      .order("product_code");
+
+    if (error) throw error;
+    products = data || [];
+
+    $("product-rows").innerHTML = products.map(p => `
+      <tr data-product-id="${p.id}">
+        <td>${esc(p.product_code)}</td>
+        <td>${esc(p.description)}</td>
+        <td><input class="package-qty" type="number" min="0" step="1" value="0"></td>
+        <td><input class="carton-qty" type="number" min="0" step="1" value="0"></td>
+        <td><input class="pallet-qty" type="number" min="0" step="1" value="0"></td>
+        <td class="total-cell">0</td>
+      </tr>
+    `).join("");
+
+    document.querySelectorAll("#product-rows input").forEach(input => {
+      input.addEventListener("input", updateRowTotal);
+    });
+  }
+
+  function updateRowTotal(event) {
+    const row = event.target.closest("tr");
+    const product = products.find(p => String(p.id) === row.dataset.productId);
+    if (!product) return;
+
+    const total = totalUnits(
+      product,
+      row.querySelector(".package-qty").value,
+      row.querySelector(".carton-qty").value,
+      row.querySelector(".pallet-qty").value
+    );
+
+    row.querySelector(".total-cell").textContent = total === null
+      ? "Ambalaj bilgisi eksik"
+      : total.toLocaleString("tr-TR");
+  }
+
+  $("sales-form").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (profile?.role !== "seller") {
+      tell("Satış raporunu yalnızca satıcı girebilir.", true);
+      return;
+    }
+
+    const dealerId = Number($("dealer-select").value);
+    const month = $("sales-month").value;
+    const visitDate = $("visit-date").value;
+
+    if (!dealerId || !month || !visitDate) {
+      tell("Bayi, satış ayı ve ziyaret tarihini seçin.", true);
+      return;
+    }
+
+    const entries = [...document.querySelectorAll("#product-rows tr")]
+      .map(row => {
+        const product = products.find(p => String(p.id) === row.dataset.productId);
+        return {
+          product,
+          package_qty: Number(row.querySelector(".package-qty").value || 0),
+          carton_qty: Number(row.querySelector(".carton-qty").value || 0),
+          pallet_qty: Number(row.querySelector(".pallet-qty").value || 0)
+        };
+      })
+      .filter(x =>
+        x.package_qty > 0 || x.carton_qty > 0 || x.pallet_qty > 0
+      );
+
+    if (!entries.length) {
+      tell("En az bir ürün için satış miktarı girin.", true);
+      return;
+    }
+
+    const invalid = entries.find(x =>
+      (x.package_qty > 0 && x.product.pack_inner == null) ||
+      (x.carton_qty > 0 && x.product.carton_inner == null) ||
+      (x.pallet_qty > 0 &&
+        (x.product.pallet_inner == null || x.product.carton_inner == null))
+    );
+
+    if (invalid) {
+      tell(
+        `${invalid.product.product_code} ürünü için paket/koli/palet dönüşüm bilgisi eksik. Ürün kartını düzeltin.`,
+        true
+      );
+      return;
+    }
+
+    $("save-report").disabled = true;
+    tell("Satış raporu kaydediliyor…");
+
+    let reportId = null;
+
+    try {
+      const { data: report, error: reportError } = await db
+        .from("dealer_sales_reports")
+        .insert({
+          dealer_id: dealerId,
+          seller_id: currentUser.id,
+          sales_month: monthDate(month),
+          visit_date: visitDate,
+          status: "draft",
+          notes: $("notes").value.trim() || null
+        })
+        .select()
+        .single();
+
+      if (reportError) {
+        if (reportError.code === "23505") {
+          throw new Error("Bu bayi için seçilen aya ait satış raporu zaten oluşturulmuş.");
+        }
+        throw reportError;
+      }
+
+      reportId = report.id;
+
+      const itemRows = entries.map(x => ({
+        sales_report_id: report.id,
+        product_id: x.product.id,
+        package_qty: x.package_qty,
+        carton_qty: x.carton_qty,
+        pallet_qty: x.pallet_qty
+      }));
+
+      const { error: itemsError } = await db
+        .from("dealer_sales_items")
+        .insert(itemRows);
+
+      if (itemsError) throw itemsError;
+
+      const { error: submitError } = await db
+        .from("dealer_sales_reports")
+        .update({
+          status: "submitted",
+          submitted_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", report.id);
+
+      if (submitError) throw submitError;
+
+      $("sales-form").reset();
+      $("sales-month").value = currentMonth();
+      $("visit-date").value = localDate();
+
+      document.querySelectorAll("#product-rows input").forEach(input => {
+        input.value = "0";
+      });
+      document.querySelectorAll(".total-cell").forEach(cell => {
+        cell.textContent = "0";
+      });
+
+      tell("Aylık bayi satış raporu kaydedildi.");
+      await loadReports();
+    } catch (error) {
+      tell("Rapor kaydedilemedi: " + error.message, true);
+
+      if (reportId) {
+        await db.from("dealer_sales_reports")
+          .delete()
+          .eq("id", reportId)
+          .eq("status", "draft");
+      }
+    } finally {
+      $("save-report").disabled = false;
+    }
+  });
+
+  async function loadReports() {
+    if (!profile) return;
+
+    let query = db.from("dealer_sales_reports")
+      .select("*")
+      .order("sales_month", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    const month = $("filter-month").value;
+    if (month) query = query.eq("sales_month", monthDate(month));
+
+    const dealerId = $("filter-dealer").value;
+    if (dealerId) query = query.eq("dealer_id", Number(dealerId));
+
+    const { data, error } = await query;
+
+    if (error) {
+      tell("Satış raporları yüklenemedi: " + error.message, true);
+      return;
+    }
+
+    reports = data || [];
+
+    $("reports-body").innerHTML = reports.length
+      ? reports.map(report => {
+          const dealer = dealers.find(d => Number(d.id) === Number(report.dealer_id));
+          const seller = reportUsers.find(u => u.id === report.seller_id);
+          const sellerName = report.seller_id === currentUser.id
+            ? (profile.full_name || profile.username)
+            : (seller?.full_name || seller?.username || "Satıcı");
+
+          return `
+            <tr>
+              <td>${esc(report.sales_month.slice(0, 7))}</td>
+              <td>${esc(report.visit_date)}</td>
+              <td>${esc(dealer?.name || "Bayi")}</td>
+              <td>${report.status === "submitted" ? "Gönderildi" : "Taslak"}</td>
+              <td>${esc(report.notes || "")}<br><small>${esc(sellerName)}</small></td>
+              <td>
+                <button type="button" class="secondary view-report" data-id="${esc(report.id)}">
+                  Ürünleri gör
+                </button>
+                ${profile.role === "admin"
+                  ? `<button type="button" class="danger delete-report" data-id="${esc(report.id)}">Sil</button>`
+                  : ""}
+              </td>
+            </tr>
+          `;
+        }).join("")
+      : `<tr><td colspan="6">Bu filtrelerde rapor bulunamadı.</td></tr>`;
+
+    document.querySelectorAll(".view-report").forEach(button => {
+      button.addEventListener("click", () => showReportDetails(button.dataset.id));
+    });
+
+    document.querySelectorAll(".delete-report").forEach(button => {
+      button.addEventListener("click", async () => {
+        if (profile.role !== "admin") return;
+        if (!confirm("Bu satış raporu ve ürün satırları kalıcı olarak silinsin mi?")) return;
+
+        const { error } = await db.from("dealer_sales_reports")
+          .delete()
+          .eq("id", button.dataset.id);
+
+        if (error) {
+          tell("Rapor silinemedi: " + error.message, true);
+          return;
+        }
+
+        tell("Satış raporu silindi.");
+        await loadReports();
+      });
+    });
+  }
+
+  async function showReportDetails(reportId) {
+    const { data: items, error } = await db.from("dealer_sales_items")
+      .select("*")
+      .eq("sales_report_id", reportId)
+      .order("product_code");
+
+    if (error) {
+      tell("Rapor ürünleri alınamadı: " + error.message, true);
+      return;
+    }
+
+    $("detail-content").innerHTML = `
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Kod</th><th>Ürün</th><th>Paket</th><th>Koli</th><th>Palet</th><th>Toplam adet</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(items || []).map(item => `
+              <tr>
+                <td>${esc(item.product_code)}</td>
+                <td>${esc(item.description)}</td>
+                <td>${Number(item.package_qty || 0).toLocaleString("tr-TR")}</td>
+                <td>${Number(item.carton_qty || 0).toLocaleString("tr-TR")}</td>
+                <td>${Number(item.pallet_qty || 0).toLocaleString("tr-TR")}</td>
+                <td>${item.total_units == null
+                  ? "Ambalaj dönüşümü eksik"
+                  : Number(item.total_units).toLocaleString("tr-TR")}
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    $("detail-dialog").showModal();
+  }
+
+  async function exportCsv() {
+    const month = $("filter-month").value;
+    if (!month) {
+      tell("CSV indirmek için önce ay seçin.", true);
+      return;
+    }
+
+    const reportIds = reports
+      .filter(r => r.status === "submitted")
+      .map(r => r.id);
+
+    if (!reportIds.length) {
+      tell("İndirilecek gönderilmiş rapor bulunamadı.", true);
+      return;
+    }
+
+    const { data: items, error } = await db.from("dealer_sales_items")
+      .select("sales_report_id, product_code, description, package_qty, carton_qty, pallet_qty, total_units")
+      .in("sales_report_id", reportIds)
+      .order("product_code");
+
+    if (error) {
+      tell("CSV raporu alınamadı: " + error.message, true);
+      return;
+    }
+
+    const reportMap = new Map(reports.map(r => [r.id, r]));
+    const dealerMap = new Map(dealers.map(d => [Number(d.id), d.name]));
+
+    const header = [
+      "Satış Ayı", "Ziyaret Tarihi", "Bayi", "Ürün Kodu", "Ürün",
+      "Paket", "Koli", "Palet", "Toplam Adet"
+    ];
+
+    const rows = (items || []).map(item => {
+      const report = reportMap.get(item.sales_report_id);
+      return [
+        report?.sales_month?.slice(0, 7) || "",
+        report?.visit_date || "",
+        dealerMap.get(Number(report?.dealer_id)) || "",
+        item.product_code,
+        item.description,
+        item.package_qty,
+        item.carton_qty,
+        item.pallet_qty,
+        item.total_units ?? ""
+      ];
+    });
+
+    const csv = [header, ...rows]
+      .map(row => row.map(value =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`
+      ).join(";"))
+      .join("\r\n");
+
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `KBR-bayi-satis-${month}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  $("login-form").addEventListener("submit", async event => {
+    event.preventDefault();
+    tell("Giriş yapılıyor…");
+
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("email").value,
+      password: $("password").value
+    });
+
+    if (error) {
+      tell("Giriş başarısız: " + error.message, true);
+      return;
+    }
+
+    try {
+      await openApp(data.user);
+      tell("Giriş başarılı.");
+    } catch (error) {
+      tell("Sayfa açılamadı: " + error.message, true);
+    }
+  });
+
+  $("logout").addEventListener("click", async () => {
+    await db.auth.signOut();
+    location.reload();
+  });
+
+  $("refresh").addEventListener("click", loadReports);
+  $("filter-month").addEventListener("change", loadReports);
+  $("filter-dealer").addEventListener("change", loadReports);
+  $("export-csv").addEventListener("click", exportCsv);
+  $("close-detail").addEventListener("click", () => $("detail-dialog").close());
+
+  db.auth.getSession().then(async ({ data }) => {
+    if (!data.session) return;
+    try {
+      await openApp(data.session.user);
+    } catch (error) {
+      tell("Oturum açılamadı: " + error.message, true);
+    }
+  });
+</script>
+</body>
+</html>
