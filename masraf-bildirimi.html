@@ -72,7 +72,6 @@
     }
 
     .toolbar .field { min-width: 190px; }
-
     .scroll { overflow-x: auto; }
 
     table {
@@ -94,9 +93,22 @@
       font-weight: 700;
     }
 
-    #message { margin: 12px 0; white-space: pre-wrap; }
-    .note { color: #64748b; font-size: 12px; line-height: 1.5; }
-    .top-link { color: #17633d; text-decoration: none; }
+    #message {
+      margin: 12px 0;
+      white-space: pre-wrap;
+    }
+
+    .note {
+      color: #64748b;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .top-link {
+      color: #17633d;
+      text-decoration: none;
+    }
+
     .hidden { display: none !important; }
 
     .totals {
@@ -158,7 +170,9 @@
       background: #fff;
     }
 
-    .signature-box strong, .signature-box span { display: block; }
+    .signature-box strong,
+    .signature-box span { display: block; }
+
     .signature-box span { margin-top: 22px; }
 
     dialog {
@@ -339,10 +353,12 @@
         <label for="email">E-posta</label>
         <input id="email" type="email" autocomplete="username" required>
       </div>
+
       <div class="field">
         <label for="password">Şifre</label>
         <input id="password" type="password" autocomplete="current-password" required>
       </div>
+
       <button type="submit">Giriş yap</button>
     </form>
   </section>
@@ -659,9 +675,7 @@
     }
 
     const paymentType = $("filter-payment").value;
-    if (paymentType) {
-      query = query.eq("payment_type", paymentType);
-    }
+    if (paymentType) query = query.eq("payment_type", paymentType);
 
     const { data, error } = await query;
 
@@ -717,7 +731,6 @@
     $("sum-amount").textContent = money(amountSum);
     $("sum-vat").textContent = money(vatSum);
     $("sum-total").textContent = money(totalSum);
-
     $("print-period").textContent = $("filter-month").value || "Tüm dönem";
     $("print-payment").textContent = $("filter-payment").value || "Tümü";
     $("print-date").textContent = localDate();
@@ -738,12 +751,9 @@
       expenses.map(expense => expense.submitter_name).filter(Boolean)
     )];
 
-    const approvedExpenses = expenses.filter(
-      expense => expense.status === "approved"
-    );
-
+    const approved = expenses.filter(expense => expense.status === "approved");
     const approvers = [...new Set(
-      approvedExpenses.map(expense => expense.approver_name).filter(Boolean)
+      approved.map(expense => expense.approver_name).filter(Boolean)
     )];
 
     $("print-signatures").innerHTML = `
@@ -755,10 +765,10 @@
       <div class="print-signature-box">
         <strong>Formu onaylayan</strong>
         <p>${esc(approvers.join(", ") || "Henüz onaylanmadı")}</p>
-        ${approvedExpenses.filter(expense => expense.approver_signature).map(expense => `
+        ${approved.filter(e => e.approver_signature).map(e => `
           <div class="print-signature-entry">
-            <small>${esc(expense.approver_name || "")} — ${esc(expense.expense_date)}</small>
-            <img src="${esc(expense.approver_signature)}" alt="Onaylayan imzası">
+            <small>${esc(e.approver_name || "")} — ${esc(e.expense_date)}</small>
+            <img src="${esc(e.approver_signature)}" alt="Onaylayan imzası">
           </div>
         `).join("")}
       </div>
@@ -850,6 +860,8 @@
     });
   }
 
+  function finishDrawing() { isDrawing = false; }
+
   $("signature-canvas").addEventListener("pointerdown", event => {
     event.preventDefault();
     const canvas = $("signature-canvas");
@@ -872,8 +884,6 @@
     context.lineTo(point.x, point.y);
     context.stroke();
   });
-
-  function finishDrawing() { isDrawing = false; }
 
   $("signature-canvas").addEventListener("pointerup", finishDrawing);
   $("signature-canvas").addEventListener("pointercancel", finishDrawing);
